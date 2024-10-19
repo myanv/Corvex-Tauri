@@ -9,14 +9,14 @@ import { User } from 'lucide-react'
 import { Menu } from 'lucide-react'
 
 interface TopNavProps {
-    selectedNote: string | null
-    setSelectedNote: (note: string) => void
+    selectedNode: string | null
+    setSelectedNode: (note: string | null) => void
     toggleSidebar: () => void
 }
 
 export const TopNav: React.FC<TopNavProps> = ({ 
-    selectedNote, 
-    setSelectedNote, 
+    selectedNode, 
+    setSelectedNode, 
     toggleSidebar
 }) => {
 
@@ -28,7 +28,7 @@ export const TopNav: React.FC<TopNavProps> = ({
                 </Button>
                 <div className="ml-4 flex items-center">
                 <ChevronRight className="h-4 w-4 mr-1" />
-                <span className="font-medium">{selectedNote || "Select a note"}</span>
+                <span className="font-medium">{selectedNode || "Select a note"}</span>
                 </div>
             </div>
             <div className="flex items-center space-x-4">

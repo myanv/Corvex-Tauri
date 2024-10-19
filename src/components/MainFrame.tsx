@@ -56,7 +56,7 @@ export default function MainFrame() {
     <div className="flex h-screen bg-background text-foreground">
       <Sidebar folders={folders} selectedNote={selectedNode} setSelectedNote={setSelectedNode} sidebarOpen={sidebarOpen} />
 
-      <Content toggleSidebar={toggleSidebar} selectedNote={selectedNode} setSelectedNote={setSelectedNode} />
+      <Content toggleSidebar={toggleSidebar} selectedNode={selectedNode} setSelectedNode={setSelectedNode} nodeContent={nodeContent} setNodeContent={setNodeContent} />
       
     </div>
   )
