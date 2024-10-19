@@ -1,22 +1,39 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::fs::{self, File};
-use std::io::{Read, Write};
+mod commands;
+mod utils;
+
+use std::fs::File;
+use std::io::Write;
 use std::process::{Command, Stdio};
 use tempfile::tempdir;
-use std::path::{self, PathBuf};
+use std::fs;
 
 fn main() {
-  tauri::Builder::default()
-    .invoke_handler(tauri::generate_handler![generate_pdf, save_node, load_node, list_nodes])
-    .plugin(tauri_plugin_dialog::init())
-    .run(tauri::generate_context!())
-    .expect("error while running tauri application");
-    
-    app_lib::run();
-}
+    tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![
+            generate_pdf,
 
+            // File Commands
+            commands::file_commands::get_storage_directory,
+            commands::file_commands::create_file,
+            commands::file_commands::modify_file,
+            commands::file_commands::delete_file,
+            commands::file_commands::get_file_content,
+            commands::file_commands::save_file_content,
+            commands::file_commands::list_all_files,
+
+            // Folder Commands
+            commands::folder_commands::create_folder,
+            commands::folder_commands::modify_folder,
+            commands::folder_commands::delete_folder,
+            commands::folder_commands::list_folders
+        ])
+        .plugin(tauri_plugin_dialog::init())
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
+}
 
 #[tauri::command]
 async fn generate_pdf(content: String) -> Result<Vec<u8>, String> {
@@ -53,87 +70,3 @@ async fn generate_pdf(content: String) -> Result<Vec<u8>, String> {
     Ok(pdf_bytes)
 }
 
-
-#[tauri::command]
-fn save_node(filename: String, content: String) -> Result<(), String> {
-    let path = PathBuf::from("nodes").join(filename);
-    let mut file = File::create(path).map_err(|e| format!("Failed to create file: {}", e))?;
-    file.write_all(content.as_bytes())
-        .map_err(|e| format!("Failed to write to file: {}", e))?;
-    Ok(())
-}
-
-#[tauri::command]
-fn load_node(filename: String) -> Result<String, String> {
-    let path = PathBuf::from("nodes").join(filename);
-    let mut file = File::open(path).map_err(|e| format!("Failed to open file: {}", e))?;
-    let mut content = String::new();
-    file.read_to_string(&mut content)
-        .map_err(|e| format!("Failed to read file: {}", e))?;
-    Ok(content)
-}
-
-#[tauri::command]
-fn list_nodes() -> Result<Vec<String>, String> {
-    let paths = fs::read_dir("nodes").map_err(|e| format!("Failed to read directory: {}", e))?;
-    let mut nodes = Vec::new();
-    for path in paths {
-        let path = path.map_err(|e| format!("Failed to access path: {}", e))?;
-        if let Some(file_name) = path.path().file_name() {
-            if let Some(file_name_str) = file_name.to_str() {
-                nodes.push(file_name_str.to_string());
-            }
-        }
-    }
-    Ok(nodes)
-}
-
-#[tauri::command]
-fn list_folders() -> Result<Vec<(String, Vec<String>)>, String> {
-  let paths = fs::read_dir("nodes").map_err(|e| format!("Failed to read directory: {}", e))?;
-  let mut folders = Vec::new();
-
-  for path in paths {
-    let path = path.map_err(|e| format!("Failed to access path: {}", e))?;
-    let folder_name = path.file_name().into_string().map_err(|e| format!("Invalid folder name: {:#?}", e))?;
-
-    if path.path().is_dir() {
-      let nodes = fs::read_dir(path.path())
-            .map_err(|e| format!("Failed to read directory: {}", e))?
-            .filter_map(|entry| entry.ok())
-            .filter(|entry| entry.path().is_file())
-            .filter_map(|entry| entry.path().file_name().map(|name| name.to_string_lossy().into_owned()))
-            .collect();
-      folders.push((folder_name, nodes));
-
-    }
-
-  }
-  Ok(folders)
-}
-
-#[tauri::command]
-fn create_folder(folder_name: String) -> Result<(), String> {
-  let path = PathBuf::from("nodes").join(folder_name);
-  fs::create_dir(&path).map_err(|e| format!("Failed to create directory: {}", e))?;
-  Ok(())
-}
-
-#[tauri::command]
-fn save_node_in_folder(folder: String, filename: String, content: String) -> Result<(), String> {
-  let path = PathBuf::from("nodes").join(folder).join(filename);
-  let mut file = File::create(path).map_err(|e| format!("Failed to create file: {}", e))?;
-  file.write_all(content.as_bytes())
-    .map_err(|e| format!("Failed to write to file: {}", e))?;
-  Ok(())
-}
-
-#[tauri::command]
-fn load_node_from_folder(folder: String, filename: String) -> Result<String, String> {
-  let path = PathBuf::from("nodes").join(folder).join(filename);
-  let mut file = File::open(path).map_err(|e| format!("Failed to open file: {}", e))?;
-  let mut content = String::new();
-  file.read_to_string(&mut content)
-    .map_err(|e| format!("Failed to read file: {}", e))?;
-  Ok(content)
-}
