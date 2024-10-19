@@ -7,6 +7,7 @@ import {
     Folder,
     Plus,
 } from 'lucide-react'  
+import { CreateNewFile } from './CreateNewFile'
 
 interface SidebarProps {
     folders: { name: string; nodes: string[] }[]
@@ -25,9 +26,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <aside className={`${sidebarOpen ? 'w-64' : 'w-0'} transition-all duration-300 overflow-hidden border-r`}>
             <ScrollArea className="h-screen">
                 <div className="p-4">
-                    <Button variant="ghost" className="w-full justify-start mb-4">
-                    <Plus className="mr-2 h-4 w-4" /> New
-                    </Button>
+                    <CreateNewFile />
+                    
                     {folders.map((folder) => (
                     <div key={folder.name} className="mb-4">
                         <div className="flex items-center mb-2">

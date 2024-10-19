@@ -9,7 +9,7 @@ use std::path::{self, PathBuf};
 
 fn main() {
   tauri::Builder::default()
-    .invoke_handler(tauri::generate_handler![generate_pdf, save_node, load_node, list_nodes])
+    .invoke_handler(tauri::generate_handler![generate_pdf, save_node, load_node, list_nodes, create_folder, list_folders, load_node_from_folder])
     .plugin(tauri_plugin_dialog::init())
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
@@ -52,7 +52,6 @@ async fn generate_pdf(content: String) -> Result<Vec<u8>, String> {
 
     Ok(pdf_bytes)
 }
-
 
 #[tauri::command]
 fn save_node(filename: String, content: String) -> Result<(), String> {
