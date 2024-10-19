@@ -38,16 +38,7 @@ export default function MainFrame() {
     }
   }
 
-  const folders = [
-    {
-      name: "Work",
-      notes: ["Project A", "Meeting Notes", "Ideas"]
-    },
-    {
-      name: "Personal",
-      notes: ["Journal", "Travel Plans", "Shopping List"]
-    }
-  ]
+  
 
   return (
     <div className="flex h-screen bg-background text-foreground">
