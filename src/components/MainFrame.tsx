@@ -10,6 +10,7 @@ export default function MainFrame() {
   const [selectedNode, setSelectedNode] = useState<string | null>(null)
   const [nodes, setNodes] = useState<string[]>([])
   const [nodeContent, setNodeContent] = useState<string>('')
+  const [folders, setFolders] = useState<{ name: string; nodes: string[] }[]>([])
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen)
 
@@ -17,7 +18,18 @@ export default function MainFrame() {
     invoke('list_nodes')
       .then((value) => setNodes(value as string[]))
       .catch((error) => console.error(error))
+    
+    invoke('list_folders')
+      .then((value) => setFolders(value as { name: string; nodes: string[] }[]))
+      .catch((error) => console.error(error))
   }, []);
+
+  const handleNodeClick = (folder: string, node: string) => {
+    invoke('load_node_from_folder', { folder, filename: node })
+      .then((value) => setSelectedNode(`${folder}/${node}`))
+      .catch((error) => console.error('Failed to load node:', error))
+  
+  }
 
   const loadNode = (filename: string) => {
     invoke('load_node', { filename }  )

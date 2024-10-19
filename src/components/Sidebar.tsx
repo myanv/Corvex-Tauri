@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'  
 
 interface SidebarProps {
-    folders: { name: string; notes: string[] }[]
+    folders: { name: string; nodes: string[] }[]
     selectedNote: string | null
     setSelectedNote: (note: string) => void
     sidebarOpen: boolean
@@ -35,15 +35,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         <Folder className="h-4 w-4 mr-2" />
                         <span className="text-sm font-medium">{folder.name}</span>
                         </div>
-                        {folder.notes.map((note) => (
+                        {folder.nodes.map((node) => (
                         <Button
-                            key={note}
+                            key={node}
                             variant="ghost"
-                            className={`w-full justify-start pl-8 mb-1 ${selectedNote === note ? 'bg-accent' : ''}`}
-                            onClick={() => setSelectedNote(note)}
+                            className={`w-full justify-start pl-8 mb-1 ${selectedNote === node ? 'bg-accent' : ''}`}
+                            onClick={() => setSelectedNote(node)}
                         >
                             <File className="h-4 w-4 mr-2" />
-                            <span className="text-sm">{note}</span>
+                            <span className="text-sm">{node}</span>
                         </Button>
                         ))}
                     </div>
