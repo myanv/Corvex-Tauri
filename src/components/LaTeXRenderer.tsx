@@ -8,6 +8,8 @@ import 'react-pdf/dist/esm/Page/TextLayer.css';
 import 'react-pdf/dist/cjs/Page/AnnotationLayer.css';
 import 'react-pdf/dist/cjs/Page/TextLayer.css';
 
+import { invoke } from '@tauri-apps/api/core';
+
 interface LaTeXRendererProps {
   content: string;
   setContent: (content: string) => void;
@@ -30,30 +32,38 @@ export const LaTeXRenderer: React.FC<LaTeXRendererProps> = ({ content }) => {
   const generatePDF = async () => {
     try {
       
-      const response = await fetch('/api/generate-pdf', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content }),
-      });
-
-      if (response.ok) {
-        const pdfBlob = await response.blob();
+      const pdfBytes = await invoke<Uint8Array>('generate_pdf', { content });
+      if (pdfBytes) {
+        const pdfBlob = new Blob([new Uint8Array(pdfBytes)], { type: 'application/pdf' });
         const pdfBlobUrl = URL.createObjectURL(pdfBlob);
         setPdfUrl(pdfBlobUrl);
+        console.log(pdfBlobUrl);
       } else {
-        console.error('Failed to generate PDF:', response.statusText);
+        console.error('Failed to generate PDF.');
       }
     } catch (error) {
       console.error('Error generating PDF:', error);
     }
   };
 
+  const handleDownloadPdf = () => {
+    if (pdfUrl) {
+      const link = document.createElement('a');
+      link.href = pdfUrl;
+      link.download = 'document.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  }
+
 
   return (
     <div className="latex-renderer h-full w-full">
-      <button onClick={generatePDF}>Generate PDF</button>
+      <div>
+        <button onClick={generatePDF}>Generate PDF</button>
+        <button onClick={handleDownloadPdf}>Download PDF</button>
+      </div>
       {pdfUrl ? (
         <>
           <Document

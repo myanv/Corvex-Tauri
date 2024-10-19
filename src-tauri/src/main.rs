@@ -13,7 +13,8 @@ fn main() {
     .plugin(tauri_plugin_dialog::init())
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
-    // app_lib::run();
+    
+    app_lib::run();
 }
 
 
@@ -23,7 +24,7 @@ async fn generate_pdf(content: String) -> Result<Vec<u8>, String> {
     let temp_dir = tempdir().map_err(|e| format!("Failed to create temp dir: {}", e))?;
     let temp_dir_path = temp_dir.path().to_path_buf();
 
-    let latex_file_path = temp_dir_path.join("main.tex");
+    let latex_file_path = temp_dir_path.join("document.tex");
     let mut latex_file = File::create(&latex_file_path).map_err(|e| format!("Failed to create LaTeX file: {}", e))?;
 
     latex_file
@@ -45,6 +46,9 @@ async fn generate_pdf(content: String) -> Result<Vec<u8>, String> {
     let pdf_file_path = temp_dir_path.join("document.pdf");
     let pdf_bytes = fs::read(&pdf_file_path)
       .map_err(|e| format!("Failed to read PDF file: {}", e))?;
+
+    // Save to disk to manually verify PDF
+    // fs::write("output_debug.pdf", pdf_bytes.clone()).expect("Failed to write PDF file");
 
     Ok(pdf_bytes)
 }

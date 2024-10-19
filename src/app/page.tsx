@@ -5,6 +5,7 @@ export default function Home() {
 
   return (
      <div className="h-screen">
+      Hi
         <LaTeXEditorPage />
      </div>
   )

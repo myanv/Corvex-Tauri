@@ -13,8 +13,8 @@
     "windows": [
       {
         "title": "Corvex",
-        "width": 1800,
-        "height": 1600,
+        "width": 1200,
+        "height": 600,
         "resizable": true,
         "fullscreen": false
       }
