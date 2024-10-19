@@ -10,6 +10,7 @@ import { User } from "lucide-react";
 import { Menu } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
 import { TopNav } from "./TopNav";
+import { Note } from "./Note";
 
 interface ContentProps {
     toggleSidebar: () => void;
@@ -26,7 +27,7 @@ export const Content: React.FC<ContentProps> = ({
         <main className="flex-1 flex flex-col overflow-hidden">
             <TopNav selectedNote={selectedNote} setSelectedNote={setSelectedNote} toggleSidebar={toggleSidebar} />
 
-        
+            <Note selectedNote={selectedNote} />
         </main>
     )
 }
