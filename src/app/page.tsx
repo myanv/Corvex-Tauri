@@ -1,12 +1,10 @@
-import { LaTeXEditorPage } from "@/components/LaTeXEditorPage";
-
+import MainFrame from "@/components/MainFrame";
 
 export default function Home() {
 
   return (
      <div className="h-screen">
-      Hi
-        <LaTeXEditorPage />
+        <MainFrame />
      </div>
   )
 }

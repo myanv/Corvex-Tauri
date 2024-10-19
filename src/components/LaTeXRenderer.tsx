@@ -9,10 +9,11 @@ import 'react-pdf/dist/cjs/Page/AnnotationLayer.css';
 import 'react-pdf/dist/cjs/Page/TextLayer.css';
 
 import { invoke } from '@tauri-apps/api/core';
+import { Button } from './ui/button';
+import { ScrollArea } from './ui/scroll-area';
 
 interface LaTeXRendererProps {
   content: string;
-  setContent: (content: string) => void;
 }
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -57,28 +58,28 @@ export const LaTeXRenderer: React.FC<LaTeXRendererProps> = ({ content }) => {
     }
   }
 
-
   return (
-    <div className="latex-renderer h-full w-full">
-      <div>
-        <button onClick={generatePDF}>Generate PDF</button>
-        <button onClick={handleDownloadPdf}>Download PDF</button>
+    <ScrollArea className="h-full w-full">
+      <div className="latex-renderer h-full w-full">
+        <div>
+          <Button onClick={generatePDF}>Compile</Button>
+          <Button variant='outline' onClick={handleDownloadPdf}>Download PDF</Button>
+        </div>
+        {pdfUrl ? (
+          <>
+            <Document
+              file={pdfUrl}
+              onLoadSuccess={onDocumentLoadSuccess}
+              
+            >
+              <Page pageNumber={pageNumber} />
+            </Document>
+            <p>
+              Page {pageNumber} of {numPages}
+            </p>
+          </>
+        ) : null}
       </div>
-      {pdfUrl ? (
-        <>
-          <Document
-          file={pdfUrl}
-          onLoadSuccess={onDocumentLoadSuccess}
-          >
-            <Page pageNumber={pageNumber} />
-          </Document>
-          <p>
-            Page {pageNumber} of {numPages}
-          </p>
-        </>
-      ) : (
-        <p>Loading PDF...</p>
-      )}
-    </div>
+    </ScrollArea>
   );
 };
