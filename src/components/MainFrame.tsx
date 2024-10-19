@@ -39,7 +39,6 @@ export default function MainFrame() {
     <div className="flex h-screen bg-background text-foreground">
       <Sidebar folders={folders} selectedNote={selectedNote} setSelectedNote={setSelectedNote} sidebarOpen={sidebarOpen} />
 
-      {/* Main Content */}
       <Content toggleSidebar={toggleSidebar} selectedNote={selectedNote} setSelectedNote={setSelectedNote} />
       
     </div>
