@@ -11,6 +11,7 @@ interface EditorComponentProps {
 export const EditorComponent: React.FC<EditorComponentProps> = ({ content, setContent }) => {
     const editorRef = useRef<monaco.editor.IStandaloneCodeEditor>();
 
+
     const handleEditorWillMount: BeforeMount = (monaco: Monaco) => {
         monaco.languages.register({ id: 'latex' })
 
