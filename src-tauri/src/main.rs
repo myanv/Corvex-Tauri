@@ -95,7 +95,7 @@ fn list_folders() -> Result<Vec<(String, Vec<String>)>, String> {
 
   for path in paths {
     let path = path.map_err(|e| format!("Failed to access path: {}", e))?;
-    let folder_name = path.file_name().into_string().unwrap_or_default().map_err(|e| format!("Failed to convert folder name to string: {}", e))?;
+    let folder_name = path.file_name().into_string().map_err(|e| format!("Invalid folder name: {:#?}", e))?;
 
     if path.path().is_dir() {
       let nodes = fs::read_dir(path.path())
