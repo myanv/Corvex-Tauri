@@ -5,13 +5,8 @@ import {
     ChevronDown,
     File,
     Folder,
-    Menu,
     Plus,
-    Search,
-    Settings,
-    User
-} from 'lucide-react'
-import { useState } from 'react'    
+} from 'lucide-react'  
 
 interface SidebarProps {
     folders: { name: string; notes: string[] }[]

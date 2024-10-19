@@ -1,16 +1,7 @@
 'use client'
 
 import React from "react";
-import { Button } from "./ui/button";
-import { ChevronRight } from "lucide-react";
-import { Input } from "./ui/input";
-import { Search } from "lucide-react";
-import { Settings } from "lucide-react";
-import { User } from "lucide-react";
-import { Menu } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
-import { TopNav } from "./TopNav";
-import { Sidebar } from "./Sidebar";
 
 interface NoteProps {
     selectedNote: string | null;

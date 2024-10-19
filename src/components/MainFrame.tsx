@@ -1,20 +1,6 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import {
-  ChevronDown,
-  ChevronRight,
-  File,
-  Folder,
-  Menu,
-  Plus,
-  Search,
-  Settings,
-  User
-} from "lucide-react"
 import { Sidebar } from './Sidebar'
 import { Content } from './Content'
 
