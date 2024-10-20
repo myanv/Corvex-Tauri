@@ -5,59 +5,70 @@ import { Sidebar } from './Sidebar'
 import { Content } from './Content'
 import { invoke } from '@tauri-apps/api/core'
 
+// Updated Folder interface to include nested subfolders
+export interface Folder {
+  name: string
+  files: string[]
+  subfolders: Folder[]
+}
+
 export default function MainFrame() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [selectedNode, setSelectedNode] = useState<string | null>(null)
-  const [nodes, setNodes] = useState<string[]>([])
-  const [nodeContent, setNodeContent] = useState<string>('')
-  const [folders, setFolders] = useState<{ name: string; nodes: string[] }[]>([])
+  const [selectedFile, setSelectedFile] = useState<string | null>(null)
+  const [fileContent, setFileContent] = useState<string>('')
+
+  // Initialize with the root folder structure
+  const [folders, setFolders] = useState<Folder>({
+    name: '',
+    files: [],
+    subfolders: []
+  })
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen)
 
+  // Fetch folders and files once on component mount
   useEffect(() => {
-    invoke('list_nodes')
-      .then((value) => setNodes(value as string[]))
-      .catch((error) => console.error(error))
-    
-    invoke('list_folders')
-      .then((value) => setFolders(value as { name: string; nodes: string[] }[]))
-      .catch((error) => console.error(error))
-  }, []);
+    refreshFoldersAndFiles();
+  }, [])
 
-  const handleNodeClick = (folder: string, node: string) => {
-    invoke('load_node_from_folder', { folder, filename: node })
-      .then((value) => setSelectedNode(`${folder}/${node}`))
-      .catch((error) => console.error('Failed to load node:', error))
-  
-  }
-
-  const loadNode = (filename: string) => {
-    invoke('load_node', { filename }  )
-      .then((value) => {
-        setNodeContent(value as string)
-        setSelectedNode(filename)
-      })
-      .catch((error) => console.error('Failed to load node:', error))
-  }
-
-  const saveNode = () => {
-    if (selectedNode) {
-      invoke('save_node', { filename: selectedNode, content: nodeContent })
-        .then(() => {
-          console.log('Node saved successfully')
-        })
-        .catch((error) => console.error('Failed to save node:', error))
+  const handleFileClick = async (folderPath: string, file: string) => {
+    try {
+      const content = await invoke<string>('get_file_content', { filename: `${folderPath}/${file}` })
+      setFileContent(content)
+      setSelectedFile(`${folderPath}/${file}`)
+    } catch (error) {
+      console.error('Failed to load file:', error)
     }
   }
 
-  
+  const refreshFoldersAndFiles = async () => {
+    try {
+      const fetchedFolders = await invoke<Folder[]>('list_all_files')
+      setFolders(fetchedFolders[0]) // Assume root folder is returned at index 0
+      console.log('Refreshed folders and files:', fetchedFolders[0]);
+    } catch (error) {
+      console.error('Error refreshing folders:', error)
+    }
+  }
 
   return (
     <div className="flex h-screen bg-background text-foreground">
-      <Sidebar folders={folders} selectedNote={selectedNode} setSelectedNote={setSelectedNode} sidebarOpen={sidebarOpen} />
+      <Sidebar
+        folders={folders}
+        selectedFile={selectedFile}
+        setSelectedFile={setSelectedFile}
+        sidebarOpen={sidebarOpen}
+        onFileClick={handleFileClick}
+        refreshFolders={refreshFoldersAndFiles}
+      />
 
-      <Content toggleSidebar={toggleSidebar} selectedNode={selectedNode} setSelectedNode={setSelectedNode} nodeContent={nodeContent} setNodeContent={setNodeContent} />
-      
+      <Content
+        toggleSidebar={toggleSidebar}
+        selectedFile={selectedFile}
+        setFileContent={setFileContent}
+        fileContent={fileContent}
+        setSelectedFile={setSelectedFile}
+      />
     </div>
   )
 }

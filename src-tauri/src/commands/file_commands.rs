@@ -1,9 +1,10 @@
+use std::collections::HashMap;
 use std::fs::{self, File};
 use std::io::{Read, Write};
 use tauri::command;
 use crate::utils::path_utils::{get_storage_dir, validate_extension};
+use walkdir::WalkDir;
 
-/// Returns the storage directory path as a string.
 #[command]
 pub fn get_storage_directory() -> Result<String, String> {
     let path = get_storage_dir()?;
@@ -24,10 +25,10 @@ pub fn create_file(filename: Option<String>) -> Result<String, String> {
     }
 
     File::create(&file_path).map_err(|e| format!("Failed to create file: {}", e))?;
+    println!("Created file: {}", file_path.display());
     Ok(file_path.to_string_lossy().into_owned())
 }
 
-/// Modifies a file's name.
 #[command]
 pub fn modify_file(old_filename: String, new_filename: String) -> Result<(), String> {
     validate_extension(&new_filename)?;
@@ -46,7 +47,6 @@ pub fn modify_file(old_filename: String, new_filename: String) -> Result<(), Str
     fs::rename(&old_path, &new_path).map_err(|e| format!("Failed to rename file: {}", e))
 }
 
-/// Deletes a specified file.
 #[command]
 pub fn delete_file(filename: String) -> Result<(), String> {
     let storage_dir = get_storage_dir()?;
@@ -59,7 +59,6 @@ pub fn delete_file(filename: String) -> Result<(), String> {
     fs::remove_file(&file_path).map_err(|e| format!("Failed to delete file: {}", e))
 }
 
-/// Retrieves the content of a file.
 #[command]
 pub fn get_file_content(filename: String) -> Result<String, String> {
     let storage_dir = get_storage_dir()?;
@@ -76,7 +75,6 @@ pub fn get_file_content(filename: String) -> Result<String, String> {
     Ok(content)
 }
 
-/// Saves content to a file.
 #[command]
 pub fn save_file_content(filename: String, content: String) -> Result<(), String> {
     let storage_dir = get_storage_dir()?;
@@ -90,21 +88,4 @@ pub fn save_file_content(filename: String, content: String) -> Result<(), String
     file.write_all(content.as_bytes())
         .map_err(|e| format!("Failed to write to file: {}", e))?;
     Ok(())
-}
-
-/// Lists all files in the storage directory and its subdirectories.
-#[command]
-pub fn list_all_files() -> Result<Vec<String>, String> {
-    let storage_dir = get_storage_dir()?;
-    let mut files = Vec::new();
-
-    for entry in walkdir::WalkDir::new(&storage_dir).into_iter().filter_map(|e| e.ok()) {
-        if entry.file_type().is_file() {
-            if let Some(rel_path) = entry.path().strip_prefix(&storage_dir).ok() {
-                files.push(rel_path.to_string_lossy().into_owned());
-            }
-        }
-    }
-
-    Ok(files)
 }

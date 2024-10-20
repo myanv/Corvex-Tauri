@@ -7,36 +7,40 @@ import { invoke } from "@tauri-apps/api/core";
 
 interface ContentProps {
     toggleSidebar: () => void;
-    selectedNode: string | null;
-    setSelectedNode: (note: string | null) => void;
-    nodeContent: string;
-    setNodeContent: (content: string) => void;
-
+    setFileContent: (content: string) => void;
+    selectedFile: string | null;
+    setSelectedFile: (file: string | null) => void;
+    fileContent: string;
 }
+
 export const Content: React.FC<ContentProps> = ({
     toggleSidebar, 
-    selectedNode, 
-    setSelectedNode,
-    nodeContent
+    selectedFile,
+    setFileContent,
+    setSelectedFile,
+    fileContent,
 }) => {
 
-    const saveNode = () => {
-        if (selectedNode) {
-            const [folder, filename] = selectedNode?.split("/");
-            invoke('save_node_in_folder', { folder, filename: selectedNode, content: nodeContent })
+    const saveFile = () => {
+        if (selectedFile) {
+            invoke('save_file_content', { filename: selectedFile, content: fileContent })
                 .then(() => {
-                    setSelectedNode(null)
-                    console.log('Node saved successfully')
+                    console.log('File saved successfully')
                 })
-                .catch((error) => console.error('Failed to save node:', error))
+                .catch((error: any) => console.error('Failed to save file:', error))
         }
     }
 
     return (
         <main className="flex-1 flex flex-col overflow-hidden">
-            <TopNav selectedNode={selectedNode} setSelectedNode={setSelectedNode} toggleSidebar={toggleSidebar} />
+            <TopNav 
+                selectedFile={selectedFile} 
+                setSelectedFile={setSelectedFile} 
+                toggleSidebar={toggleSidebar} 
+                onSave={saveFile}
+            />
 
-            <Note selectedNode={selectedNode} />
+            <Note selectedFile={selectedFile} fileContent={fileContent} setFileContent={setFileContent} />
         </main>
     )
 }

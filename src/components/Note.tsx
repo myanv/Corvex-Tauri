@@ -4,25 +4,26 @@ import React from "react";
 import { ScrollArea } from "./ui/scroll-area";
 
 interface NoteProps {
-    selectedNode: string | null;
+    selectedFile: string | null;
+    fileContent: string;
+    setFileContent: (content: string) => void;
 }
 
-export const Note: React.FC<NoteProps> = ({ selectedNode }) => {
+export const Note: React.FC<NoteProps> = ({ selectedFile, fileContent, setFileContent }) => {
     return (
         <ScrollArea className="flex-1 p-6">
-          {selectedNode ? (
+          {selectedFile ? (
             <div className="max-w-3xl mx-auto">
-              <h1 className="text-3xl font-bold mb-4">{selectedNode}</h1>
-              <p className="mb-4">
-                This is a sample content for the {selectedNode} note. 
-              </p>
-              <p>
-                test
-              </p>
+              <textarea
+                className="w-full h-full p-2 border rounded text-lg"
+                value={fileContent}
+                onChange={(e) => setFileContent(e.target.value)}
+                placeholder="Start writing your note here..."
+              />
             </div>
           ) : (
             <div className="text-center text-muted-foreground">
-              Select a note from the sidebar to view its content.
+              Select a file from the sidebar to view or edit its content.
             </div>
           )}
         </ScrollArea>
