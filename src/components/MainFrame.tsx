@@ -31,7 +31,7 @@ export default function MainFrame() {
 
   // Fetch folders and files once on component mount
   useEffect(() => {
-    refreshFoldersAndFiles();
+    refreshFolders();
   }, []) // Empty dependency array to prevent infinite loops
 
   const handleFileClick = async (folderPath: string, file: string) => {
@@ -44,7 +44,7 @@ export default function MainFrame() {
     }
   }
 
-  const refreshFoldersAndFiles = async () => {
+  const refreshFolders = async () => {
     try {
       const fetchedFolders = await invoke<Folder[]>('list_all_files')
       console.log("Fetched: ", fetchedFolders)
@@ -65,7 +65,7 @@ export default function MainFrame() {
         setSelectedFile={setSelectedFile}
         sidebarOpen={sidebarOpen}
         onFileClick={handleFileClick}
-        refreshFolders={refreshFoldersAndFiles}
+        refreshFolders={refreshFolders}
       />
 
       <Content

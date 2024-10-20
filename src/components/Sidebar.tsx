@@ -29,6 +29,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [selectedNode, setSelectedNode] = useState<string>("") // Track selected folder path
 
   const handleCreateNewFile = async () => {
+    console.log(selectedNode)
+    
     const filename = prompt("Enter the new file name (e.g., Untitled.md):")
     if (filename) {
       const targetPath = selectedNode || "" // Use selected folder, or root if none
@@ -76,7 +78,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </Button>
 
           {/* Render the folder tree */}
-          <FileTree folders={folders} onFileClick={onFileClick} onFolderSelect={handleFolderSelect} />
+          <FileTree folders={folders} onFileClick={onFileClick} onFolderSelect={handleFolderSelect} refreshFolders={refreshFolders}/>
 
         </div>
       </ScrollArea>

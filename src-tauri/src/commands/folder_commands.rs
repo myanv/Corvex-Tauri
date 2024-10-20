@@ -78,10 +78,10 @@ pub fn create_folder(foldername: String) -> Result<Folder, String> {
 }
 
 #[command]
-pub fn modify_folder(old_name: String, new_name: String) -> Result<Folder, String> {
+pub fn modify_folder(oldName: String, newName: String) -> Result<Folder, String> {
     let storage_dir = get_storage_dir()?;
-    let old_path = storage_dir.join(&old_name);
-    let new_path = storage_dir.join(&new_name);
+    let old_path = storage_dir.join(&oldName);
+    let new_path = storage_dir.join(&newName);
 
     if !old_path.exists() {
         return Err("Original folder does not exist".into());

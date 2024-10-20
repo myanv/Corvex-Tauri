@@ -37,11 +37,11 @@ pub fn create_file(filename: String) -> Result<FileEntry, String> {
 }
 
 #[command]
-pub fn modify_file(old_filename: String, new_filename: String) -> Result<FileEntry, String> {
-    validate_extension(&new_filename)?;
+pub fn modify_file(oldFilename: String, newFilename: String) -> Result<FileEntry, String> {
+    validate_extension(&newFilename)?;
     let storage_dir = get_storage_dir()?;
-    let old_path = storage_dir.join(&old_filename);
-    let new_path = storage_dir.join(&new_filename);
+    let old_path = storage_dir.join(&oldFilename);
+    let new_path = storage_dir.join(&newFilename);
 
     if !old_path.exists() {
         return Err("Original file does not exist".into());
@@ -59,7 +59,7 @@ pub fn modify_file(old_filename: String, new_filename: String) -> Result<FileEnt
         .into_owned();
     Ok(FileEntry {
         id: file_id,
-        name: new_filename.split('/').last().unwrap_or(&new_filename).to_string(),
+        name: newFilename.split('/').last().unwrap_or(&newFilename).to_string(),
     })
 }
 
