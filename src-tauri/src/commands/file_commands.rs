@@ -12,19 +12,16 @@ pub fn get_storage_directory() -> Result<String, String> {
 }
 
 /// Creates a new file with default name `Untitled.md`.
-#[command]
-pub fn create_file(filename: Option<String>) -> Result<String, String> {
+#[tauri::command]
+pub fn create_file(filename: String) -> Result<String, String> {
     let storage_dir = get_storage_dir()?;
-    let filename = filename.unwrap_or_else(|| "Untitled.md".to_string());
-
-    validate_extension(&filename)?;
-
     let file_path = storage_dir.join(&filename);
+
     if file_path.exists() {
         return Err("File already exists".into());
     }
 
-    File::create(&file_path).map_err(|e| format!("Failed to create file: {}", e))?;
+    fs::File::create(&file_path).map_err(|e| format!("Failed to create file: {}", e))?;
     println!("Created file: {}", file_path.display());
     Ok(file_path.to_string_lossy().into_owned())
 }
