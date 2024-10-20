@@ -1,73 +1,22 @@
 // src/components/Sidebar.tsx
+
 'use client'
 
 import React, { useState } from 'react'
 import { Button } from './ui/button'
 import { ScrollArea } from './ui/scroll-area'
-import { ChevronDown, File, Folder, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { invoke } from '@tauri-apps/api/core'
-import { Folder as FolderProps } from './MainFrame'
+import { Folder, FileEntry } from './MainFrame'
+import { FileTree } from './FileTree'
 
 interface SidebarProps {
-  folders: FolderProps,
+  folders: Folder[],
   selectedFile: string | null
   setSelectedFile: (file: string) => void
   sidebarOpen: boolean
   onFileClick: (folderPath: string, file: string) => void,
   refreshFolders: () => void
-}
-
-// Recursive component to render folders and their subfolders
-const renderFolder = (
-  folder: FolderProps,
-  selectedFile: string | null,
-  onFileClick: (folderPath: string, file: string) => void,
-  basePath: string,
-  setSelectedNode: (folderPath: string) => void
-) => {
-  const selectedNode = '';
-  const isRootFolder = folder.name === ''
-  const displayName = isRootFolder ? "corvex/data" : folder.name
-  const currentPath = isRootFolder ? '' : basePath ? `${basePath}/${folder.name}` : folder.name
-
-  return (
-    <div key={currentPath || "root"} className="mb-4">
-      {/* Folder title - clickable to select folder */}
-      <Button
-        variant={'outline'}
-        className={`flex items-center mb-2 cursor-pointer ${selectedNode === currentPath ? 'bg-slate-100' : ''}`}
-        onClick={() => setSelectedNode(currentPath)}
-      >
-        <ChevronDown className="h-4 w-4 mr-1" />
-        <Folder className="h-4 w-4 mr-2" />
-        <span className="text-sm font-medium">{displayName || "corvex/data"}</span>
-      </Button>
-
-      {/* Render files in this folder */}
-      {folder.files && folder.files.length > 0 && (
-        folder.files.map((file) => (
-          <Button
-            key={file}
-            variant="ghost"
-            className={`w-full justify-start pl-8 mb-1 ${selectedFile === `${currentPath}/${file}` ? 'bg-accent' : ''}`}
-            onClick={() => onFileClick(currentPath, file)}
-          >
-            <File className="h-4 w-4 mr-2" />
-            <span className="text-sm">{file}</span>
-          </Button>
-        ))
-      )}
-
-      {/* Recursively render subfolders */}
-      {folder.subfolders && folder.subfolders.length > 0 && (
-        <div className="pl-6">
-          {folder.subfolders.map((subfolder) =>
-            renderFolder(subfolder, selectedFile, onFileClick, currentPath, setSelectedNode)
-          )}
-        </div>
-      )}
-    </div>
-  )
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -107,6 +56,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   }
 
+  const handleFolderSelect = (folderPath: string | null) => {
+    if (folderPath !== null) {
+      setSelectedNode(folderPath);
+    }
+  };
+
   return (
     <aside className={`${sidebarOpen ? 'w-64' : 'w-0'} transition-all duration-300 overflow-hidden border-r`}>
       <ScrollArea className="h-screen">
@@ -120,9 +75,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <Plus className="mr-2 h-4 w-4" /> New Folder
           </Button>
 
-          {/* Render the root folder and its subfolders */}
-          {renderFolder(folders, selectedFile, onFileClick, folders.name, setSelectedNode)}
-          
+          {/* Render the folder tree */}
+          <FileTree folders={folders} onFileClick={onFileClick} onFolderSelect={handleFolderSelect} />
+
         </div>
       </ScrollArea>
     </aside>

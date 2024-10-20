@@ -5,6 +5,8 @@ use tauri::command;
 use crate::utils::path_utils::{get_storage_dir, validate_extension};
 use walkdir::WalkDir;
 
+use super::folder_commands::FileEntry;
+
 #[command]
 pub fn get_storage_directory() -> Result<String, String> {
     let path = get_storage_dir()?;
@@ -13,7 +15,7 @@ pub fn get_storage_directory() -> Result<String, String> {
 
 /// Creates a new file with default name `Untitled.md`.
 #[tauri::command]
-pub fn create_file(filename: String) -> Result<String, String> {
+pub fn create_file(filename: String) -> Result<FileEntry, String> {
     let storage_dir = get_storage_dir()?;
     let file_path = storage_dir.join(&filename);
 
@@ -23,11 +25,19 @@ pub fn create_file(filename: String) -> Result<String, String> {
 
     fs::File::create(&file_path).map_err(|e| format!("Failed to create file: {}", e))?;
     println!("Created file: {}", file_path.display());
-    Ok(file_path.to_string_lossy().into_owned())
+
+    let file_id = file_path.strip_prefix(storage_dir)
+                .map_err(|e| format!("Failed to strip prefix: {}", e))?
+                .to_string_lossy()
+                .into_owned();
+    Ok(FileEntry {
+        id: file_id,
+        name: filename.split('/').last().unwrap_or(&filename).to_string(),
+    })
 }
 
 #[command]
-pub fn modify_file(old_filename: String, new_filename: String) -> Result<(), String> {
+pub fn modify_file(old_filename: String, new_filename: String) -> Result<FileEntry, String> {
     validate_extension(&new_filename)?;
     let storage_dir = get_storage_dir()?;
     let old_path = storage_dir.join(&old_filename);
@@ -41,7 +51,16 @@ pub fn modify_file(old_filename: String, new_filename: String) -> Result<(), Str
         return Err("New filename already exists".into());
     }
 
-    fs::rename(&old_path, &new_path).map_err(|e| format!("Failed to rename file: {}", e))
+    fs::rename(&old_path, &new_path).map_err(|e| format!("Failed to rename file: {}", e));
+
+    let file_id = new_path.strip_prefix(storage_dir)
+        .map_err(|e| format!("Failed to strip prefix: {}", e))?
+        .to_string_lossy()
+        .into_owned();
+    Ok(FileEntry {
+        id: file_id,
+        name: new_filename.split('/').last().unwrap_or(&new_filename).to_string(),
+    })
 }
 
 #[command]
@@ -53,7 +72,9 @@ pub fn delete_file(filename: String) -> Result<(), String> {
         return Err("File does not exist".into());
     }
 
-    fs::remove_file(&file_path).map_err(|e| format!("Failed to delete file: {}", e))
+    fs::remove_file(&file_path).map_err(|e| format!("Failed to delete file: {}", e));
+    println!("Deleted file: {}", file_path.display());
+    Ok(())
 }
 
 #[command]

@@ -16,6 +16,15 @@ fn build_folder(path: &Path, storage_dir: &Path) -> Result<Folder, String> {
             .to_string()
     };
 
+    let folder_id = if path == storage_dir {
+        "".to_string()
+    } else {
+        path.strip_prefix(storage_dir)
+            .map_err(|e| format!("Failed to strip prefix: {}", e))?
+            .to_string_lossy()
+            .into_owned()
+    };
+
     let mut files = Vec::new();
     let mut subfolders = Vec::new();
 
@@ -30,12 +39,20 @@ fn build_folder(path: &Path, storage_dir: &Path) -> Result<Folder, String> {
         } else if entry_path.is_file() {
             // Collect file names
             if let Some(file_name) = entry_path.file_name().and_then(|n| n.to_str()) {
-                files.push(file_name.to_string());
+                let file_id = entry_path.strip_prefix(storage_dir)
+                    .map_err(|e| format!("Failed to strip prefix: {}", e))?
+                    .to_string_lossy()
+                    .into_owned();
+                files.push(FileEntry { 
+                    id: file_id, 
+                    name: file_name.to_string() 
+                });
             }
         }
     }
 
     Ok(Folder {
+        id: folder_id,
         name: folder_name,
         files,
         subfolders,
@@ -45,7 +62,7 @@ fn build_folder(path: &Path, storage_dir: &Path) -> Result<Folder, String> {
 
 /// Creates a new folder at the specified relative path.
 #[tauri::command]
-pub fn create_folder(foldername: String) -> Result<(), String> {
+pub fn create_folder(foldername: String) -> Result<Folder, String> {
     let storage_dir = get_storage_dir()?;
     let folder_path = storage_dir.join(&foldername);
 
@@ -55,11 +72,13 @@ pub fn create_folder(foldername: String) -> Result<(), String> {
 
     fs::create_dir_all(&folder_path).map_err(|e| format!("Failed to create folder: {}", e))?;
     println!("Created folder: {}", folder_path.display());
-    Ok(())
+    
+    let new_folder = build_folder(&folder_path, &storage_dir)?;
+    Ok(new_folder)
 }
 
 #[command]
-pub fn modify_folder(old_name: String, new_name: String) -> Result<(), String> {
+pub fn modify_folder(old_name: String, new_name: String) -> Result<Folder, String> {
     let storage_dir = get_storage_dir()?;
     let old_path = storage_dir.join(&old_name);
     let new_path = storage_dir.join(&new_name);
@@ -72,7 +91,11 @@ pub fn modify_folder(old_name: String, new_name: String) -> Result<(), String> {
         return Err("New folder name already exists".into());
     }
 
-    fs::rename(&old_path, &new_path).map_err(|e| format!("Failed to rename folder: {}", e))
+    fs::rename(&old_path, &new_path).map_err(|e| format!("Failed to rename folder: {}", e));
+    println!("Renamed folder: {}", new_path.display());
+
+    let renamed_folder = build_folder(&new_path, &storage_dir)?;
+    Ok(renamed_folder)
 }
 
 #[command]
@@ -84,42 +107,24 @@ pub fn delete_folder(folder_name: String) -> Result<(), String> {
         return Err("Folder does not exist".into());
     }
 
-    fs::remove_dir_all(&folder_path).map_err(|e| format!("Failed to delete folder: {}", e))
-}
-
-#[command]
-pub fn list_folders() -> Result<Vec<Folder>, String> {
-    let storage_dir = get_storage_dir()?;
-    let mut folders = Vec::new();
-
-    for entry in fs::read_dir(&storage_dir).map_err(|e| format!("Failed to read storage directory: {}", e))? {
-        let entry = entry.map_err(|e| format!("Failed to read entry: {}", e))?;
-        let path = entry.path();
-        if path.is_dir() {
-            let folder_name = entry.file_name().into_string().map_err(|e| format!("Invalid folder name: {:?}", e))?;
-            let mut files = Vec::new();
-            for file_entry in fs::read_dir(&path).map_err(|e| format!("Failed to read folder: {}", e))? {
-                let file_entry = file_entry.map_err(|e| format!("Failed to read file entry: {}", e))?;
-                let file_path = file_entry.path();
-                if file_path.is_file() {
-                    if let Some(file_name) = file_path.file_name().and_then(|n| n.to_str()) {
-                        files.push(file_name.to_string());
-                    }
-                }
-            }
-            folders.push(Folder { name: folder_name, files, subfolders: vec![] });
-        }
-    }
-
-    Ok(folders)
+    fs::remove_dir_all(&folder_path).map_err(|e| format!("Failed to delete folder: {}", e));
+    println!("Deleted folder: {}", folder_path.display());
+    Ok(())
 }
 
 /// Struct to represent folder information.
 #[derive(Clone, serde::Serialize)]
 pub struct Folder {
+    pub id: String, // Full path as ID
     pub name: String,
-    pub files: Vec<String>,
+    pub files: Vec<FileEntry>,
     pub subfolders: Vec<Folder>,
+}
+
+#[derive(Clone, serde::Serialize)]
+pub struct FileEntry {
+    pub id: String,
+    pub name: String,
 }
 
 

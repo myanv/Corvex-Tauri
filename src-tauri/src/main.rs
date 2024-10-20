@@ -27,7 +27,6 @@ fn main() {
             commands::folder_commands::create_folder,
             commands::folder_commands::modify_folder,
             commands::folder_commands::delete_folder,
-            commands::folder_commands::list_folders,
             commands::folder_commands::list_all_files,
 
         ])

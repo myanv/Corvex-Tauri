@@ -1,4 +1,5 @@
 // src/components/MainFrame.tsx
+
 'use client'
 
 import React, { useEffect, useState } from 'react'
@@ -6,9 +7,15 @@ import { Sidebar } from './Sidebar'
 import { Content } from './Content'
 import { invoke } from '@tauri-apps/api/core'
 
-export interface Folder {
+export interface FileEntry {
+  id: string
   name: string
-  files: string[]
+}
+
+export interface Folder {
+  id: string
+  name: string
+  files: FileEntry[]
   subfolders: Folder[]
 }
 
@@ -18,11 +25,7 @@ export default function MainFrame() {
   const [fileContent, setFileContent] = useState<string>('')
 
   // Initialize with the root folder structure
-  const [folders, setFolders] = useState<Folder>({
-    name: '',
-    files: [],
-    subfolders: []
-  })
+  const [folders, setFolders] = useState<Folder[]>([])
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen)
 
@@ -44,14 +47,15 @@ export default function MainFrame() {
   const refreshFoldersAndFiles = async () => {
     try {
       const fetchedFolders = await invoke<Folder[]>('list_all_files')
-      if (fetchedFolders.length > 0) {
-        setFolders(fetchedFolders[0]) // Assume root folder is returned at index 0
-        console.log('Refreshed folders and files:', fetchedFolders[0]);
-      }
+      console.log("Fetched: ", fetchedFolders)
+      setFolders(fetchedFolders) // Set the entire folder hierarchy
+      console.log('Refreshed folders and files:', fetchedFolders);
     } catch (error) {
       console.error('Error refreshing folders:', error)
     }
   }
+
+  console.log("Folders", folders)
 
   return (
     <div className="flex h-screen bg-background text-foreground">
