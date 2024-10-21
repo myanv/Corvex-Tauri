@@ -102,6 +102,7 @@ export const FileTree: React.FC<FileTreeProps> = ({
   const handleDelete = async (node: NodeApi<any>) => {
     try {
       const command = node.data.leaf ? 'delete_file' : 'delete_folder';
+      if (node.data.id === "root") alert("Root folder cannot be deleted.");
       const params = node.data.leaf
         ? { filename: node.data.id }
         : { folderName: node.data.id };
@@ -287,7 +288,7 @@ export const FileTree: React.FC<FileTreeProps> = ({
                   </span>
                 </div>
 
-                {hoveredNode === node.id && (
+                {hoveredNode === node.id && node.data.id !== "root" && (
                   <div className="flex items-center ml-2">
                     <button
                       onClick={(e) => {
@@ -322,11 +323,11 @@ export const FileTree: React.FC<FileTreeProps> = ({
           x={contextMenu.x}
           y={contextMenu.y}
           onRename={() => {
-            contextMenu.node?.edit();
+            if (contextMenu.node?.data.id !== "root") contextMenu.node?.edit();
             setContextMenu(null);
           }}
           onDelete={() => {
-            handleDelete(contextMenu.node!);
+            if (contextMenu.node?.data.id !== "root")handleDelete(contextMenu.node!);
             setContextMenu(null);
           }}
           onNewFile={() => {
