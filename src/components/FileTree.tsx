@@ -85,17 +85,30 @@ export const FileTree: React.FC<FileTreeProps> = ({
 
     if (!node) return
 
+    console.log(node)
+
     setSelectedNode(node)
 
     if (!newName) return;
 
     try {
       if (node.data.leaf) {
-        let newNamePath = node.data.id.match(/^.*[\\/]/)[0] + newName
-        await invoke('modify_file', { oldFilename: node.data.id, newFilename: newNamePath });
+        let parentPath = node.data.id.match(/^.*[\\/]/)
+        if (!parentPath) {
+            await invoke('modify_file', { oldFilename: node.data.id, newFilename: newName });
+        } else {
+            let newNamePath = node.data.id.match(/^.*[\\/]/)[0] + newName
+            await invoke('modify_file', { oldFilename: node.data.id, newFilename: newNamePath });
+        }
+        
       } else {
-        let newNamePath = node.data.id.match(/^.*[\\/]/)[0] + newName
-        await invoke('modify_folder', { oldName: node.data.id, newName: newNamePath });
+        let parentPath = node.data.id.match(/^.*[\\/]/)
+        if (!parentPath) {
+            await invoke('modify_folder', { oldName: node.data.id, newName: newName });
+        } else {
+            let newNamePath = node.data.id.match(/^.*[\\/]/)[0] + newName
+            await invoke('modify_folder', { oldName: node.data.id, newName: newNamePath });   
+        }
       }
       refreshFolders();
     } catch (error) {
@@ -126,6 +139,24 @@ export const FileTree: React.FC<FileTreeProps> = ({
     setContextMenu({ ...contextMenu, visible: false });
   };
 
+  const handleDeleteFromRow = async (nodes: NodeApi<any>[]) => {
+    const node = nodes[0]
+
+    const confirmDelete = confirm("Are you sure you want to delete this?");
+    if (!confirmDelete) return;
+
+    try {
+      if (node.data.leaf) {
+        await invoke('delete_file', { filename: node.data.id });
+      } else {
+        await invoke('delete_folder', { folderName: node.data.id });
+      }
+      refreshFolders();
+    } catch (error) {
+      console.error("Failed to delete:", error);
+      alert(`Failed to delete: ${error}`);
+    }
+  }
 
   const handleDelete = async () => {
     if (!contextMenu.node) return;
@@ -236,7 +267,7 @@ export const FileTree: React.FC<FileTreeProps> = ({
                         </button>
                         <button onClick={(e) => {
                             e.stopPropagation()
-                            handleDelete()
+                            handleDeleteFromRow([node])
                         }} title="Delete...">
                             <Cross2Icon className="w-4 h-4 ml-2" />
                         </button>
