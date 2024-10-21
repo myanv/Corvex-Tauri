@@ -33,7 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     
     const filename = prompt("Enter the new file name (e.g., Untitled.md):")
     if (filename) {
-      const targetPath = selectedNode || "" // Use selected folder, or root if none
+      const targetPath = selectedNode === "root" ? "" : (selectedNode || "") 
       const fullPath = targetPath ? `${targetPath}/${filename}` : filename
       try {
         await invoke('create_file', { filename: fullPath })
@@ -47,7 +47,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const handleCreateNewFolder = async () => {
     const folderName = prompt("Enter the new folder name:")
     if (folderName) {
-      const targetPath = selectedNode || "" // Use selected folder, or root if none
+      const targetPath = selectedNode === "root" ? "" : (selectedNode || "") 
       const fullPath = targetPath ? `${targetPath}/${folderName}` : folderName
       try {
         await invoke('create_folder', { foldername: fullPath })

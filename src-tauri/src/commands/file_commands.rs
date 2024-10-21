@@ -23,6 +23,8 @@ pub fn create_file(filename: String) -> Result<FileEntry, String> {
         return Err("File already exists".into());
     }
 
+    println!("Creating file: {}", filename);
+
     fs::File::create(&file_path).map_err(|e| format!("Failed to create file: {}", e))?;
     println!("Created file: {}", file_path.display());
 

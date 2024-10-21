@@ -70,8 +70,6 @@ export const FileTree: React.FC<FileTreeProps> = ({
     const node = nodes[0];
     if (!node) return;
 
-    setSelectedNode(node); // Update selected node state
-
     if (node.data.leaf) {
       const filePath = node.data.id;
       const folderPath = filePath.substring(0, filePath.lastIndexOf('/')) || '';
