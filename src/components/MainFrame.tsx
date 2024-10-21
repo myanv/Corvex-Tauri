@@ -10,6 +10,7 @@ import { invoke } from '@tauri-apps/api/core'
 export interface FileEntry {
   id: string
   name: string
+  content: string
 }
 
 export interface Folder {
@@ -33,14 +34,16 @@ export default function MainFrame() {
 
   const handleFileClick = async (folderPath: string, file: string) => {
     try {
-      console.log(`Selected file: ${folderPath}/${file}`)
+      const filename = folderPath === "" ? file : `${folderPath}/${file}`;
 
-      const content = await invoke<string>('get_file_content', { filename: `${folderPath}/${file}` })
+      console.log(`Selected file: ${filename}`)
+
+      const content = await invoke<string>('get_file_content', { filename: filename })
 
       console.log("Content: ", content)
 
       setFileContent(content)
-      setSelectedFile(`${folderPath}/${file}`)
+      setSelectedFile(filename)
     } catch (error) {
       console.error('Failed to load file:', error)
     }

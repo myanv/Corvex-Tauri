@@ -42,9 +42,13 @@ fn build_folder(path: &Path, storage_dir: &Path) -> Result<Folder, String> {
                     .map_err(|e| format!("Failed to strip prefix: {}", e))?
                     .to_string_lossy()
                     .into_owned();
+
+                let content = fs::read_to_string(&entry_path).map_err(|e| format!("Failed to read file: {}", e))?;
+                
                 files.push(FileEntry { 
                     id: file_id, 
-                    name: file_name.to_string() 
+                    name: file_name.to_string(),
+                    content: content, 
                 });
             }
         }
@@ -129,6 +133,7 @@ pub struct Folder {
 pub struct FileEntry {
     pub id: String,
     pub name: String,
+    pub content: String,
 }
 
 

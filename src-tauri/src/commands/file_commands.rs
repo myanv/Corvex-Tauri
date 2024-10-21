@@ -30,9 +30,13 @@ pub fn create_file(filename: String) -> Result<FileEntry, String> {
                 .map_err(|e| format!("Failed to strip prefix: {}", e))?
                 .to_string_lossy()
                 .into_owned();
+
+    let content = fs::read_to_string(&file_path).map_err(|e| format!("Failed to read file: {}", e))?;
+
     Ok(FileEntry {
         id: file_id,
         name: filename.split('/').last().unwrap_or(&filename).to_string(),
+        content: content,
     })
 }
 
@@ -65,9 +69,13 @@ pub fn modify_file(old_filename: String, new_filename: String) -> Result<FileEnt
         .to_string_lossy()
         .into_owned();
 
+    let content = fs::read_to_string(&new_path)
+        .map_err(|e| format!("Failed to read file: {}", e))?;
+
     Ok(FileEntry {
         id: file_id,
         name: new_filename.split('/').last().unwrap_or(&new_filename).to_string(),
+        content: content,
     })
 }
 
@@ -94,6 +102,7 @@ pub fn get_file_content(filename: String) -> Result<String, String> {
     let storage_dir = get_storage_dir()?;
     let file_path = storage_dir.join(&filename);
 
+    println!("Storage directory: {}", storage_dir.display());
     println!("Reading file: {}", file_path.display());
 
     if !file_path.exists() {
