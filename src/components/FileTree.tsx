@@ -10,9 +10,11 @@ import {
   Folder as FolderIcon,
   File as FileIcon,
   Edit,
+  FilePlus,
 } from 'lucide-react';
 import { Cross2Icon } from "@radix-ui/react-icons";
 import ContextMenu from "./ContexMenu";
+import { Button } from "./ui/button";
 
 interface FileTreeProps {
   folders: Folder[];
@@ -23,7 +25,7 @@ interface FileTreeProps {
 
 const mapFolderToTree = (folder: Folder): any => ({
   id: folder.id,
-  name: folder.name,
+  name: folder.name === "" ? "corvex/data" : folder.name,
   children: [
     ...folder.files.map(file => ({
       id: file.id,
@@ -51,6 +53,7 @@ export const FileTree: React.FC<FileTreeProps> = ({
     y: number;
     node: NodeApi<any> | null;
   } | null>(null);
+  console.log(folders)
   const [treeData, setTreeData] = useState(folders.map(mapFolderToTree));
 
   useEffect(() => {
@@ -194,6 +197,8 @@ export const FileTree: React.FC<FileTreeProps> = ({
     }
   };
 
+  const MAX_INDENT_LEVEL = 3
+
   return (
     <div>
       <Tree
@@ -211,7 +216,8 @@ export const FileTree: React.FC<FileTreeProps> = ({
         selectionFollowsFocus={true}
         renderRow={(rowProps: RowRendererProps<any>) => {
           const { node, innerRef, attrs } = rowProps;
-
+          
+          const currentIndentLevel = Math.min(node.level, MAX_INDENT_LEVEL)
           return (
             <div
               ref={innerRef}
@@ -231,7 +237,7 @@ export const FileTree: React.FC<FileTreeProps> = ({
               }}
             >
               <div
-                style={{ paddingLeft: `${20 * node.level}px` }}
+                style={{ paddingLeft: `${20 * currentIndentLevel}px` }}
                 className="flex max-w-[220px] justify-between"
               >
                 <div className="flex items-center flex-grow">
@@ -271,7 +277,12 @@ export const FileTree: React.FC<FileTreeProps> = ({
                         className="border border-gray-300 rounded px-1"
                       />
                     ) : (
-                      <span>{node.data.name}</span>
+                      <span
+                        className="text-sm truncate max-w-[150px]"
+                        title={node.data.name}
+                      >
+                          {node.data.name}
+                      </span>
                     )}
                   </span>
                 </div>

@@ -20,8 +20,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   refreshFolders
 }) => {
   return (
-    <aside className={`${sidebarOpen ? 'w-64' : 'w-0'} transition-all duration-300 overflow-hidden border-r`}>
-      <ScrollArea className="h-screen">
+    <aside className={`${sidebarOpen ? 'w-64 max-w-[300px]' : 'w-0'} transition-all duration-300 border-r`}
+    style={{ width: sidebarOpen ? "min(300px, 30vw)" : 0 }}
+    >
+      <ScrollArea className="h-screen overflow-x-auto">
         <div className="p-4">
           <Separator className='mb-4' />
           <FileTree
