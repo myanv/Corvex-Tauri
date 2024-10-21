@@ -1,6 +1,6 @@
 import { Tree, NodeApi, RowRendererProps } from "react-arborist";
 import { Folder } from "./MainFrame";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import {
   ChevronDown,
@@ -14,10 +14,28 @@ import ContextMenu from "./ContexMenu";
 
 interface FileTreeProps {
   folders: Folder[];
-  onFileClick: (folderPath: string, file: string) => void;
+  onFileClick: (folderPath: string) => void;
   onFolderSelect: (folderPath: string | null) => void;
   refreshFolders: () => void;
 }
+
+const mapFolderToTree = (folder: Folder): any => ({
+  id: folder.id || "root",
+  name: folder.name || "corvex/data",
+  children: [
+    ...folder.files.map(file => ({
+      id: file.id,
+      name: file.name,
+      leaf: true,
+    })),
+    ...folder.subfolders.map(mapFolderToTree)
+  ],
+});
+
+const getParentPath = (path: string): string => {
+  const parentPathMatch = path.match(/^.*[\\/]/);
+  return parentPathMatch ? parentPathMatch[0] : '';
+};
 
 export const FileTree: React.FC<FileTreeProps> = ({
   folders,
@@ -42,51 +60,33 @@ export const FileTree: React.FC<FileTreeProps> = ({
     };
   }, []);
 
-  const mapFolderToTree = (folder: Folder): any => ({
-    id: folder.id || "root",
-    name: folder.name || "corvex/data",
-    children: [
-      ...folder.files.map(file => ({
-        id: file.id,
-        name: file.name,
-        leaf: true,
-      })),
-      ...folder.subfolders.map(mapFolderToTree)
-    ],
-  });
-
-  const data = folders.map(mapFolderToTree);
+  const data = useMemo(() => folders.map(mapFolderToTree), [folders])
 
   const handleSelect = (nodes: NodeApi<any>[]) => {
     const node = nodes[0];
     if (!node) return;
 
-    setSelectedNode(node); 
+    setSelectedNode(node)
 
-    if (node.data.leaf) {
-      const filePath = node.data.id;
-      const folderPath = filePath.substring(0, filePath.lastIndexOf('/')) || '';
-      const fileName = node.data.name;
-      onFileClick(folderPath, fileName);
-    } else {
-      onFolderSelect(node.data.id || "");
-    }
+    if (node.data.leaf) onFileClick(node.data.id) 
+    else onFolderSelect(node.data.id || "")
   };
+
 
   const handleRename = async (node: NodeApi<any>) => {
     const newName = prompt("Enter the new name:");
     if (!newName) return;
 
-    try {
-      const parentPathMatch = node.data.id.match(/^.*[\\/]/);
-      const parentPath = parentPathMatch ? parentPathMatch[0] : '';
-      const newNamePath = `${parentPath}${newName}`;
+    const parentPath = getParentPath(node.data.id);
+    const newNamePath = `${parentPath}${newName}`;
 
-      if (node.data.leaf) {
-        await invoke('modify_file', { oldFilename: node.data.id, newFilename: newNamePath });
-      } else {
-        await invoke('modify_folder', { oldName: node.data.id, newName: newNamePath });
-      }
+    try {
+      const command = node.data.leaf ? 'modify_file' : 'modify_folder';
+      const params = node.data.leaf
+        ? { oldFilename: node.data.id, newFilename: newNamePath }
+        : { oldName: node.data.id, newName: newNamePath };
+
+      await invoke(command, params);
       refreshFolders();
     } catch (error) {
       console.error("Failed to rename:", error);
@@ -99,17 +99,19 @@ export const FileTree: React.FC<FileTreeProps> = ({
     if (!confirmDelete) return;
 
     try {
-      if (node.data.leaf) {
-        await invoke('delete_file', { filename: node.data.id });
-      } else {
-        await invoke('delete_folder', { folderName: node.data.id });
-      }
+      const command = node.data.leaf ? 'delete_file' : 'delete_folder';
+      const params = node.data.leaf
+        ? { filename: node.data.id }
+        : { folderName: node.data.id };
+
+      await invoke(command, params);
       refreshFolders();
     } catch (error) {
       console.error("Failed to delete:", error);
       alert(`Failed to delete: ${error}`);
     }
   };
+
 
   return (
     <div style={{ position: 'relative' }}>
@@ -130,8 +132,9 @@ export const FileTree: React.FC<FileTreeProps> = ({
               ref={innerRef}
               {...attrs}
               className={`p-1 hover:bg-gray-200 ${
-                selectedNode?.data.id === node.data.id ? 'bg-slate-300' : ''
+                node.isSelected ? 'bg-slate-300' : ''
               }`}
+              onClick={() => handleSelect([node])}
               onMouseEnter={() => setHoveredNode(node.id)}
               onMouseLeave={() => setHoveredNode(null)}
               onContextMenu={(e) => {
@@ -146,7 +149,6 @@ export const FileTree: React.FC<FileTreeProps> = ({
               <div
                 style={{ paddingLeft: `${20 * node.level}px` }}
                 className="flex max-w-[220px] justify-between"
-                onClick={() => handleSelect([node])}
               >
                 <div className="flex items-center flex-grow">
                   {!node.isLeaf && (

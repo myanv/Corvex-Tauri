@@ -7,57 +7,25 @@ import { Button } from './ui/button'
 import { ScrollArea } from './ui/scroll-area'
 import { Plus } from 'lucide-react'
 import { invoke } from '@tauri-apps/api/core'
-import { Folder, FileEntry } from './MainFrame'
+import { Folder } from './MainFrame'
 import { FileTree } from './FileTree'
 import { Separator } from './ui/separator'
 
 interface SidebarProps {
   folders: Folder[],
-  selectedFile: string | null
   setSelectedFile: (file: string) => void
   sidebarOpen: boolean
-  onFileClick: (folderPath: string, file: string) => void,
+  onFileClick: (folderPath: string) => void,
   refreshFolders: () => void
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   folders,
-  selectedFile,
   sidebarOpen,
   onFileClick,
   refreshFolders
 }) => {
-  const [selectedNode, setSelectedNode] = useState<string>("") // Track selected folder path
-
-  const handleCreateNewFile = async () => {
-    console.log(selectedNode)
-    
-    const filename = prompt("Enter the new file name (e.g., Untitled.md):")
-    if (filename) {
-      const targetPath = selectedNode === "root" ? "" : (selectedNode || "") 
-      const fullPath = targetPath ? `${targetPath}/${filename}` : filename
-      try {
-        await invoke('create_file', { filename: fullPath })
-        refreshFolders() // Refresh after creation
-      } catch (error) {
-        console.error('Failed to create file:', error)
-      }
-    }
-  }
-
-  const handleCreateNewFolder = async () => {
-    const folderName = prompt("Enter the new folder name:")
-    if (folderName) {
-      const targetPath = selectedNode === "root" ? "" : (selectedNode || "") 
-      const fullPath = targetPath ? `${targetPath}/${folderName}` : folderName
-      try {
-        await invoke('create_folder', { foldername: fullPath })
-        refreshFolders() // Refresh after creation
-      } catch (error) {
-        console.error('Failed to create folder:', error)
-      }
-    }
-  }
+  const [selectedNode, setSelectedNode] = useState<string>("")
 
   const handleFolderSelect = (folderPath: string | null) => {
     if (folderPath !== null) {
@@ -65,15 +33,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
+  const handleCreateNewNode = async (type: 'file' | 'folder') => {
+    const name = prompt(`Enter the new ${type} name:`)
+    if (name) {
+      const targetPath = selectedNode === "root" ? "" : (selectedNode || "")
+      const fullPath = targetPath ? `${targetPath}/${name}` : name
+      try {
+        if (type === "file") {
+          await invoke('create_file', { filename: fullPath })
+        } else {
+          await invoke('create_folder', { foldername: fullPath })
+        }
+        refreshFolders() 
+      } catch (error) {
+        console.error(`Failed to create new ${type}:`, error)
+      }
+    }
+  }
+
   return (
     <aside className={`${sidebarOpen ? 'w-64' : 'w-0'} transition-all duration-300 overflow-hidden border-r`}>
       <ScrollArea className="h-screen">
         <div className="p-4">
 
-          <Button variant="ghost" className="w-full justify-start mb-4" onClick={handleCreateNewFile}>
+          <Button variant="ghost" className="w-full justify-start mb-4" onClick={() => handleCreateNewNode('file')}>
             <Plus className="mr-2 h-4 w-4" /> New File
           </Button>
-          <Button variant="ghost" className="w-full justify-start mb-4" onClick={handleCreateNewFolder}>
+          <Button variant="ghost" className="w-full justify-start mb-4" onClick={() => handleCreateNewNode('folder')}>
             <Plus className="mr-2 h-4 w-4" /> New Folder
           </Button>
 
