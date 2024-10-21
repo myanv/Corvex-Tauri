@@ -1,8 +1,11 @@
-import { Tree, NodeApi, RowRendererProps } from "react-arborist";
+import { Tree, NodeApi, RowRendererProps, NodeRendererProps } from "react-arborist";
 import { Folder, FileEntry } from "./MainFrame";
 import React, { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { ChevronDown, ChevronRight, Folder as FolderIcon, File as FileIcon } from 'lucide-react';
+import { ChevronDown, ChevronRight, Folder as FolderIcon, File as FileIcon, Edit, Crosshair } from 'lucide-react';
+import { Input } from "./ui/input";
+import { Button } from "./ui/button";
+import { Cross2Icon } from "@radix-ui/react-icons";
 
 interface FileTreeProps {
   folders: Folder[];
@@ -11,6 +14,7 @@ interface FileTreeProps {
   refreshFolders: () => void;
 }
 
+
 export const FileTree: React.FC<FileTreeProps> = ({
   folders,
   onFileClick,
@@ -18,6 +22,7 @@ export const FileTree: React.FC<FileTreeProps> = ({
   refreshFolders
 }) => {
   const [selectedNode, setSelectedNode] = useState<NodeApi<any> | null>(null);
+  const [hoveredNode, setHoveredNode] = useState<string | null>('')
 
   // State for context menu
   const [contextMenu, setContextMenu] = useState<{
@@ -67,8 +72,6 @@ export const FileTree: React.FC<FileTreeProps> = ({
 
     setSelectedNode(node); // Update selected node state
 
-    console.log(node);
-
     if (node.data.leaf) {
       const filePath = node.data.id;
       const folderPath = filePath.substring(0, filePath.lastIndexOf('/')) || '';
@@ -79,7 +82,31 @@ export const FileTree: React.FC<FileTreeProps> = ({
     }
   };
 
-  // Handle renaming a folder or file
+  const handleRenameFromRow = async (nodes: NodeApi<any>[], newName: string) => {
+    const node = nodes[0]
+
+    if (!node) return
+
+    setSelectedNode(node)
+
+    if (!newName) return;
+
+    try {
+      if (node.data.leaf) {
+        let newNamePath = node.data.id.match(/^.*[\\/]/)[0] + newName
+        await invoke('modify_file', { oldFilename: node.data.id, newFilename: newNamePath });
+      } else {
+        let newNamePath = node.data.id.match(/^.*[\\/]/)[0] + newName
+        await invoke('modify_folder', { oldName: node.data.id, newName: newNamePath });
+      }
+      refreshFolders();
+    } catch (error) {
+      console.error("Failed to rename:", error);
+      alert(`Failed to rename: ${error}`);
+    }
+  }
+
+
   const handleRename = async () => {
     if (!contextMenu.node) return;
 
@@ -101,7 +128,7 @@ export const FileTree: React.FC<FileTreeProps> = ({
     setContextMenu({ ...contextMenu, visible: false });
   };
 
-  // Handle deleting a folder or file
+
   const handleDelete = async () => {
     if (!contextMenu.node) return;
 
@@ -135,7 +162,7 @@ export const FileTree: React.FC<FileTreeProps> = ({
 
   return (
     <div style={{ position: 'relative' }}>
-      {/* Render the Tree */}
+
       <Tree
         data={data}
         onSelect={handleSelect}
@@ -152,42 +179,79 @@ export const FileTree: React.FC<FileTreeProps> = ({
               <div
                 ref={innerRef}
                 {...attrs}
-                className={`p-1 ${
-                  selectedNode?.data.id === node.data.id ? 'bg-gray-200' : ''
+                className={`p-1 hover:bg-gray-200 ${
+                  selectedNode?.data.id === node.data.id ? 'bg-slate-300' : ''
                 }`}
                 onContextMenu={(e) => handleContextMenu(e, node)}
+                onMouseEnter={() => setHoveredNode(node.id)}
+                onMouseLeave={() => setHoveredNode(null)}
               >
                 <div
                   style={{ paddingLeft: `${20 * node.level}px` }}
-                  className="flex items-center"
+                  className="flex max-w-[220px] justify-between"
                   onClick={() => handleSelect([node])}
                 >
-                  {/* Toggle Icon */}
-                  {!node.isLeaf && (
-                    <div onClick={() => node.toggle()} className="cursor-pointer">
-                      {node.isOpen ? (
-                        <ChevronDown className="h-4 w-4 mr-1" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4 mr-1" />
-                      )}
-                    </div>
-                  )}
-                  {/* Icon based on type */}
-                  {node.isLeaf ? (
-                    <FileIcon className="h-4 w-4 mr-2 ml-6" />
-                  ) : (
-                    <FolderIcon className="h-4 w-4 mr-2" />
-                  )}
-                  {/* Node Name */}
-                  <span className="text-sm">{node.data.name}</span>
+                    <div className="flex items-center flex-grow">
+                        {!node.isLeaf && (
+                        <div onClick={() => node.toggle()} className="cursor-pointer">
+                        {node.isOpen ? (
+                            <ChevronDown className="h-4 w-4 mr-1" />
+                        ) : (
+                            <ChevronRight className="h-4 w-4 mr-1" />
+                        )}
+                        </div>
+                    )}
+
+                    {node.isLeaf ? (
+                        <FileIcon className="h-4 w-4 mr-2 ml-3" />
+                    ) : (
+                        <FolderIcon className="h-4 w-4 mr-2" />
+                    )}
+                    
+                    <span className="text-sm">
+                        {node.isEditing ? (
+                            <input
+                                type="text"
+                                defaultValue={node.data.name}
+                                onFocus={(e) => e.currentTarget.select()}
+                                onBlur={() => node.reset()}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Escape") node.reset()
+                                    if (e.key === "Enter") handleRenameFromRow([node], e.currentTarget.value)
+
+                                }}
+                                autoFocus
+                                
+                            />
+                        ) : (
+                            <span>{node.data.name}</span>
+                        )}
+                    </span>
                 </div>
+                {hoveredNode === node.id && (
+                    <div className="flex items-center ml-2">
+                        <button onClick={(e) => {
+                            e.stopPropagation()
+                            node.edit()
+                        }} title="Rename...">
+                            <Edit size={15}/>
+                        </button>
+                        <button onClick={(e) => {
+                            e.stopPropagation()
+                            handleDelete()
+                        }} title="Delete...">
+                            <Cross2Icon className="w-4 h-4 ml-2" />
+                        </button>
+                    </div>
+                )}
               </div>
+            </div>
             );
           }}
           
       />
 
-      {/* Context Menu */}
+
       {contextMenu.visible && (
         <ul
           style={{

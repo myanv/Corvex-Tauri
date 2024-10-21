@@ -69,15 +69,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <ScrollArea className="h-screen">
         <div className="p-4">
 
-          {/* Buttons to create new file/folder */}
           <Button variant="ghost" className="w-full justify-start mb-4" onClick={handleCreateNewFile}>
             <Plus className="mr-2 h-4 w-4" /> New File
           </Button>
           <Button variant="ghost" className="w-full justify-start mb-4" onClick={handleCreateNewFolder}>
             <Plus className="mr-2 h-4 w-4" /> New Folder
           </Button>
-
-          {/* Render the folder tree */}
+          
           <FileTree folders={folders} onFileClick={onFileClick} onFolderSelect={handleFolderSelect} refreshFolders={refreshFolders}/>
 
         </div>

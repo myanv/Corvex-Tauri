@@ -43,6 +43,8 @@ pub fn modify_file(oldFilename: String, newFilename: String) -> Result<FileEntry
     let old_path = storage_dir.join(&oldFilename);
     let new_path = storage_dir.join(&newFilename);
 
+    println!("Old file: {}, new file: {}", oldFilename, newFilename);
+
     if !old_path.exists() {
         return Err("Original file does not exist".into());
     }
@@ -57,6 +59,8 @@ pub fn modify_file(oldFilename: String, newFilename: String) -> Result<FileEntry
         .map_err(|e| format!("Failed to strip prefix: {}", e))?
         .to_string_lossy()
         .into_owned();
+
+    println!("Renamed file: {}", newFilename);
     Ok(FileEntry {
         id: file_id,
         name: newFilename.split('/').last().unwrap_or(&newFilename).to_string(),
