@@ -1,60 +1,39 @@
-import React from 'react'
-import { Button } from './ui/button'
-import { ScrollArea } from './ui/scroll-area'
-import {
-    ChevronDown,
-    File,
-    Folder,
-    Menu,
-    Plus,
-    Search,
-    Settings,
-    User
-} from 'lucide-react'
-import { useState } from 'react'    
+// src/components/Sidebar.tsx
+
+import React from 'react';
+import { ScrollArea } from './ui/scroll-area';
+import { Folder } from './MainFrame';
+import { FileTree } from './FileTree';
+import { Separator } from './ui/separator';
 
 interface SidebarProps {
-    folders: { name: string; notes: string[] }[]
-    selectedNote: string | null
-    setSelectedNote: (note: string) => void
-    sidebarOpen: boolean
+  folders: Folder[];
+  sidebarOpen: boolean;
+  onFileClick: (folderPath: string) => void;
+  refreshFolders: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ 
-    folders, 
-    selectedNote, 
-    setSelectedNote,
-    sidebarOpen
+export const Sidebar: React.FC<SidebarProps> = ({
+  folders,
+  sidebarOpen,
+  onFileClick,
+  refreshFolders
 }) => {
-    return (
-        <aside className={`${sidebarOpen ? 'w-64' : 'w-0'} transition-all duration-300 overflow-hidden border-r`}>
-            <ScrollArea className="h-screen">
-                <div className="p-4">
-                    <Button variant="ghost" className="w-full justify-start mb-4">
-                    <Plus className="mr-2 h-4 w-4" /> New
-                    </Button>
-                    {folders.map((folder) => (
-                    <div key={folder.name} className="mb-4">
-                        <div className="flex items-center mb-2">
-                        <ChevronDown className="h-4 w-4 mr-1" />
-                        <Folder className="h-4 w-4 mr-2" />
-                        <span className="text-sm font-medium">{folder.name}</span>
-                        </div>
-                        {folder.notes.map((note) => (
-                        <Button
-                            key={note}
-                            variant="ghost"
-                            className={`w-full justify-start pl-8 mb-1 ${selectedNote === note ? 'bg-accent' : ''}`}
-                            onClick={() => setSelectedNote(note)}
-                        >
-                            <File className="h-4 w-4 mr-2" />
-                            <span className="text-sm">{note}</span>
-                        </Button>
-                        ))}
-                    </div>
-                    ))}
-                </div>
-            </ScrollArea>
-        </aside>
-    )
-}
+  return (
+    <aside className={`${sidebarOpen ? 'w-64 max-w-[300px]' : 'w-0'} transition-all duration-300 border-r`}
+    style={{ width: sidebarOpen ? "min(300px, 30vw)" : 0 }}
+    >
+      <ScrollArea className="h-screen overflow-x-auto">
+        <div className="p-4">
+          <Separator className='mb-4' />
+          <FileTree
+            folders={folders}
+            onFileClick={onFileClick}
+            onFolderSelect={() => {}}
+            refreshFolders={refreshFolders}
+          />
+        </div>
+      </ScrollArea>
+    </aside>
+  );
+};

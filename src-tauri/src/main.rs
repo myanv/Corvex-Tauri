@@ -1,22 +1,41 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::fs::{self, File};
+mod commands;
+mod utils;
+
+use std::fs::File;
 use std::io::Write;
 use std::process::{Command, Stdio};
 use tempfile::tempdir;
-
+use std::fs;
 
 fn main() {
-  tauri::Builder::default()
-    .invoke_handler(tauri::generate_handler![generate_pdf])
-    .plugin(tauri_plugin_dialog::init())
-    .run(tauri::generate_context!())
-    .expect("error while running tauri application");
-    
-    app_lib::run();
-}
+    tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![
+            generate_pdf,
 
+            // File Commands
+            commands::file_commands::get_storage_directory,
+            commands::file_commands::create_file,
+            commands::file_commands::modify_file,
+            commands::file_commands::delete_file,
+            commands::file_commands::get_file_content,
+            commands::file_commands::save_file_content,
+            commands::file_commands::move_file,
+          
+            //, Folder Commands
+            commands::folder_commands::create_folder,
+            commands::folder_commands::modify_folder,
+            commands::folder_commands::delete_folder,
+            commands::folder_commands::list_all_files,
+            commands::folder_commands::move_folder
+
+        ])
+        .plugin(tauri_plugin_dialog::init())
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
+}
 
 #[tauri::command]
 async fn generate_pdf(content: String) -> Result<Vec<u8>, String> {
@@ -52,3 +71,4 @@ async fn generate_pdf(content: String) -> Result<Vec<u8>, String> {
 
     Ok(pdf_bytes)
 }
+
