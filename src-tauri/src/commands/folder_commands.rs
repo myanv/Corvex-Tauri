@@ -16,7 +16,7 @@ fn build_folder(path: &Path, storage_dir: &Path) -> Result<Folder, String> {
     };
 
     let folder_id = if path == storage_dir {
-        "".to_string()
+        "root".to_string()
     } else {
         path.strip_prefix(storage_dir)
             .map_err(|e| format!("Failed to strip prefix: {}", e))?
@@ -144,4 +144,22 @@ pub fn list_all_files() -> Result<Vec<Folder>, String> {
     let storage_dir = get_storage_dir()?;
     let root_folder = build_folder(&storage_dir, &storage_dir)?;
     Ok(vec![root_folder])
+}
+
+#[command]
+pub fn move_folder(old_path: String, new_path: String) -> Result<(), String> {
+    let storage_dir = get_storage_dir()?;
+    let old_folder_path = storage_dir.join(&old_path);
+    let new_folder_path = storage_dir.join(&new_path);
+
+    if !old_folder_path.exists() {
+        return Err("Original folder does not exist".into());
+    }
+
+    if new_folder_path.exists() {
+        return Err("Target folder already exists".into());
+    }
+
+    fs::rename(&old_folder_path, &new_folder_path)
+        .map_err(|e| format!("Failed to move folder: {}", e))
 }

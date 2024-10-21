@@ -130,3 +130,21 @@ pub fn save_file_content(filename: String, content: String) -> Result<(), String
         .map_err(|e| format!("Failed to write to file: {}", e))?;
     Ok(())
 }
+
+#[command]
+pub fn move_file(old_path: String, new_path: String) -> Result<(), String> {
+    let storage_dir = get_storage_dir()?;
+    let old_file_path = storage_dir.join(&old_path);
+    let new_file_path = storage_dir.join(&new_path);
+
+    if !old_file_path.exists() {
+        return Err("Original file does not exist".into());
+    }
+
+    if new_file_path.exists() {
+        return Err("Target file already exists".into());
+    }
+
+    fs::rename(&old_file_path, &new_file_path)
+        .map_err(|e| format!("Failed to move file: {}", e))
+}

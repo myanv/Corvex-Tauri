@@ -22,12 +22,14 @@ fn main() {
             commands::file_commands::delete_file,
             commands::file_commands::get_file_content,
             commands::file_commands::save_file_content,
+            commands::file_commands::move_file,
           
             //, Folder Commands
             commands::folder_commands::create_folder,
             commands::folder_commands::modify_folder,
             commands::folder_commands::delete_folder,
             commands::folder_commands::list_all_files,
+            commands::folder_commands::move_folder
 
         ])
         .plugin(tauri_plugin_dialog::init())

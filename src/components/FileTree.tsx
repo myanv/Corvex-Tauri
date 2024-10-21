@@ -1,4 +1,6 @@
-import { Tree, NodeApi, RowRendererProps } from "react-arborist";
+// src/components/FileTree.tsx
+
+import { Tree, NodeApi, RowRendererProps, RenameHandler, DeleteHandler, CreateHandler, MoveHandler } from "react-arborist";
 import { Folder } from "./MainFrame";
 import React, { useState, useEffect, useMemo } from 'react';
 import { invoke } from '@tauri-apps/api/core';
@@ -20,8 +22,8 @@ interface FileTreeProps {
 }
 
 const mapFolderToTree = (folder: Folder): any => ({
-  id: folder.id || "root",
-  name: folder.name || "corvex/data",
+  id: folder.id,
+  name: folder.name,
   children: [
     ...folder.files.map(file => ({
       id: file.id,
@@ -43,8 +45,7 @@ export const FileTree: React.FC<FileTreeProps> = ({
   onFolderSelect,
   refreshFolders
 }) => {
-  const [selectedNode, setSelectedNode] = useState<NodeApi<any> | null>(null);
-  const [hoveredNode, setHoveredNode] = useState<string | null>('');
+  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
 
   const [contextMenu, setContextMenu] = useState<{
     x: number;
@@ -53,28 +54,27 @@ export const FileTree: React.FC<FileTreeProps> = ({
   } | null>(null);
 
   useEffect(() => {
-    const handleClickOutside = () => setContextMenu(null)
+    const handleClickOutside = () => setContextMenu(null);
     document.addEventListener('click', handleClickOutside);
     return () => {
       document.removeEventListener('click', handleClickOutside);
     };
   }, []);
 
-  const data = useMemo(() => folders.map(mapFolderToTree), [folders])
+  const data = useMemo(() => folders.map(mapFolderToTree), [folders]);
 
   const handleSelect = (nodes: NodeApi<any>[]) => {
     const node = nodes[0];
     if (!node) return;
 
-    setSelectedNode(node)
-
-    if (node.data.leaf) onFileClick(node.data.id) 
-    else onFolderSelect(node.data.id || "")
+    if (node.data.leaf) {
+      onFileClick(node.data.id);
+    } else {
+      onFolderSelect(node.data.id || "");
+    }
   };
 
-
-  const handleRename = async (node: NodeApi<any>) => {
-    const newName = prompt("Enter the new name:");
+  const handleRename = async (node: NodeApi<any>, newName: string) => {
     if (!newName) return;
 
     const parentPath = getParentPath(node.data.id);
@@ -95,9 +95,6 @@ export const FileTree: React.FC<FileTreeProps> = ({
   };
 
   const handleDelete = async (node: NodeApi<any>) => {
-    const confirmDelete = confirm("Are you sure you want to delete this?");
-    if (!confirmDelete) return;
-
     try {
       const command = node.data.leaf ? 'delete_file' : 'delete_folder';
       const params = node.data.leaf
@@ -112,12 +109,72 @@ export const FileTree: React.FC<FileTreeProps> = ({
     }
   };
 
+  const onRenameHandler: RenameHandler<any> = async ({ node, name }) => {
+    if (!name) return;
+
+    const isNewNode = node.id.startsWith("temp-");
+
+    if (isNewNode) {
+      const parentPath = node.parent && node.parent.id !== "root" ? node.parent.data.id : "";
+      const newPath = parentPath ? `${parentPath}/${name}` : name;
+
+      try {
+        const command = node.data.leaf ? 'create_file' : 'create_folder';
+        const params = node.data.leaf
+          ? { filename: newPath }
+          : { foldername: newPath };
+
+        await invoke(command, params);
+        refreshFolders();
+      } catch (error) {
+        console.error("Failed to create:", error);
+        alert(`Failed to create: ${error}`);
+      }
+    } else {
+      await handleRename(node, name);
+    }
+  };
+
+  const onDeleteHandler: DeleteHandler<any> = async ({ nodes }) => {
+    for (const node of nodes) {
+      await handleDelete(node);
+    }
+  };
+
+  const onCreateHandler: CreateHandler<any> = async ({ parentId, parentNode, index, type }) => {
+    const tempId = "temp-" + Date.now();
+    return { id: tempId, name: "", leaf: type === "leaf" };
+  };
+
+  const onMoveHandler: MoveHandler<any> = async ({ dragNodes, parentNode }) => {
+    try {
+      await Promise.all(dragNodes.map(async (node) => {
+        const oldPath = node.data.id;
+        const newParentPath = parentNode && parentNode.id !== "root" ? parentNode.data.id : "";
+        const newPath = newParentPath ? `${newParentPath}/${node.data.name}` : node.data.name;
+
+        const command = node.data.leaf ? 'move_file' : 'move_folder';
+        const params = { oldPath, newPath };
+
+        await invoke(command, params);
+      }));
+
+      refreshFolders();
+    } catch (error) {
+      console.error("Failed to move:", error);
+      alert(`Failed to move: ${error}`);
+    }
+  };
 
   return (
     <div style={{ position: 'relative' }}>
       <Tree
         data={data}
         onSelect={handleSelect}
+        onRename={onRenameHandler}
+        onDelete={onDeleteHandler}
+        onCreate={onCreateHandler}
+        onMove={onMoveHandler}
         width={300}
         height={600}
         rowHeight={30}
@@ -134,7 +191,6 @@ export const FileTree: React.FC<FileTreeProps> = ({
               className={`p-1 hover:bg-gray-200 ${
                 node.isSelected ? 'bg-slate-300' : ''
               }`}
-              onClick={() => handleSelect([node])}
               onMouseEnter={() => setHoveredNode(node.id)}
               onMouseLeave={() => setHoveredNode(null)}
               onContextMenu={(e) => {
@@ -175,20 +231,23 @@ export const FileTree: React.FC<FileTreeProps> = ({
                         onFocus={(e) => e.currentTarget.select()}
                         onBlur={() => node.reset()}
                         onKeyDown={(e) => {
-                          if (e.key === "Escape") node.reset();
+                          if (e.key === "Escape") {
+                            node.reset();
+                          }
                           if (e.key === "Enter") {
                             e.stopPropagation();
                             node.submit(e.currentTarget.value);
-                            handleRename(node);
                           }
                         }}
                         autoFocus
+                        className="border border-gray-300 rounded px-1"
                       />
                     ) : (
                       <span>{node.data.name}</span>
                     )}
                   </span>
                 </div>
+
                 {hoveredNode === node.id && (
                   <div className="flex items-center ml-2">
                     <button
@@ -197,6 +256,7 @@ export const FileTree: React.FC<FileTreeProps> = ({
                         node.edit();
                       }}
                       title="Rename..."
+                      className="p-1 hover:bg-gray-300 rounded"
                     >
                       <Edit size={15} />
                     </button>
@@ -206,6 +266,7 @@ export const FileTree: React.FC<FileTreeProps> = ({
                         handleDelete(node);
                       }}
                       title="Delete..."
+                      className="p-1 hover:bg-gray-300 rounded"
                     >
                       <Cross2Icon className="w-4 h-4 ml-2" />
                     </button>
@@ -217,18 +278,32 @@ export const FileTree: React.FC<FileTreeProps> = ({
         }}
       />
 
-      {contextMenu && (
+      {contextMenu && contextMenu.node && (
         <ContextMenu
-            x={contextMenu.x}
-            y={contextMenu.y}
-            onRename={() => {
-                handleRename(contextMenu.node!);
-                setContextMenu(null)
-            }}
-            onDelete={() => {
-                handleDelete(contextMenu.node!);
-                setContextMenu(null)
-            }}
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onRename={() => {
+            contextMenu.node?.edit();
+            setContextMenu(null);
+          }}
+          onDelete={() => {
+            handleDelete(contextMenu.node!);
+            setContextMenu(null);
+          }}
+          onNewFile={() => {
+            contextMenu.node?.tree.create({
+              parentId: contextMenu.node.id, 
+              type: "leaf"
+            });
+            setContextMenu(null);
+          }}
+          onNewFolder={() => {
+            contextMenu.node?.tree.create({
+              parentId: contextMenu.node.id, 
+              type: "internal"
+            });
+            setContextMenu(null);
+          }}
         />
       )}
     </div>
