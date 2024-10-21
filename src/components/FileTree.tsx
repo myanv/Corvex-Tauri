@@ -14,7 +14,7 @@ import ContextMenu from "./ContexMenu";
 
 interface FileTreeProps {
   folders: Folder[];
-  onFileClick: (folderPath: string, file: string) => void;
+  onFileClick: (folderPath: string) => void;
   onFolderSelect: (folderPath: string | null) => void;
   refreshFolders: () => void;
 }
@@ -65,9 +65,7 @@ export const FileTree: React.FC<FileTreeProps> = ({
 
     if (node.data.leaf) {
       const filePath = node.data.id;
-      const folderPath = filePath.substring(0, filePath.lastIndexOf('/')) || '';
-      const fileName = node.data.name;
-      onFileClick(folderPath, fileName);
+      onFileClick(filePath);
     } else {
       onFolderSelect(node.data.id || "");
     }
