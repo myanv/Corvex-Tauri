@@ -223,9 +223,10 @@ export const FileTree: React.FC<FileTreeProps> = ({
             <div
               ref={innerRef}
               {...attrs}
-              className={`p-1 hover:bg-gray-200 ${
+              className={`p-1 cursor-pointer hover:bg-gray-200 ${
                 node.isSelected ? 'bg-slate-300' : ''
               }`}
+              onClick={() => handleSelect([node])}
               onMouseEnter={() => setHoveredNode(node.id)}
               onMouseLeave={() => setHoveredNode(null)}
               onContextMenu={(e) => {
