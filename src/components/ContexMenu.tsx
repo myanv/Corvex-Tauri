@@ -15,7 +15,7 @@ interface ContextMenuProps {
 const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onRename, onDelete, onNewFile, onNewFolder }) => {
   return (
     <div
-      className="z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95"
+      className="z-50 min-w-[10rem] overflow-hidden rounded-md border bg-popover p-2 text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95"
       style={{
         position: 'fixed',
         top: `${y}px`,

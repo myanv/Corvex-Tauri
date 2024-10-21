@@ -46,12 +46,16 @@ export const FileTree: React.FC<FileTreeProps> = ({
   refreshFolders
 }) => {
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
-
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
     node: NodeApi<any> | null;
   } | null>(null);
+  const [treeData, setTreeData] = useState(folders.map(mapFolderToTree));
+
+  useEffect(() => {
+    setTreeData(folders.map(mapFolderToTree));
+  }, [folders])
 
   useEffect(() => {
     const handleClickOutside = () => setContextMenu(null);
@@ -60,8 +64,6 @@ export const FileTree: React.FC<FileTreeProps> = ({
       document.removeEventListener('click', handleClickOutside);
     };
   }, []);
-
-  const data = useMemo(() => folders.map(mapFolderToTree), [folders]);
 
   const handleSelect = (nodes: NodeApi<any>[]) => {
     const node = nodes[0];
@@ -143,6 +145,32 @@ export const FileTree: React.FC<FileTreeProps> = ({
 
   const onCreateHandler: CreateHandler<any> = async ({ parentId, parentNode, index, type }) => {
     const tempId = "temp-" + Date.now();
+    const newNode = { id: tempId, name: "", leaf: type === "leaf" }
+
+    setTreeData(prevData => {
+      const updateChildren = (node: any): any => {
+        if (node.id === parentId) {
+          const existingChildren = node.children || [];
+          return {
+            ...node,
+            children: [
+              ...existingChildren.slice(0, index),
+              newNode,
+              ...existingChildren.slice(index)
+            ]
+          }
+        }
+
+        if (node.children) {
+          return {
+            ...node,
+            children: node.children.map(updateChildren)
+          }
+        }
+        return node
+      }
+      return prevData.map(updateChildren)
+    })
     return { id: tempId, name: "", leaf: type === "leaf" };
   };
 
@@ -167,9 +195,9 @@ export const FileTree: React.FC<FileTreeProps> = ({
   };
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div>
       <Tree
-        data={data}
+        data={treeData}
         onSelect={handleSelect}
         onRename={onRenameHandler}
         onDelete={onDeleteHandler}
