@@ -1,9 +1,7 @@
-use std::collections::HashMap;
 use std::fs::{self, File};
 use std::io::{Read, Write};
 use tauri::command;
 use crate::utils::path_utils::{get_storage_dir, validate_extension};
-use walkdir::WalkDir;
 
 use super::folder_commands::FileEntry;
 
@@ -38,14 +36,16 @@ pub fn create_file(filename: String) -> Result<FileEntry, String> {
     })
 }
 
-#[command]
-pub fn modify_file(oldFilename: String, newFilename: String) -> Result<FileEntry, String> {
-    validate_extension(&newFilename)?;
-    let storage_dir = get_storage_dir()?;
-    let old_path = storage_dir.join(&oldFilename);
-    let new_path = storage_dir.join(&newFilename);
+// Tauri automatically converts oldFilename from frontend into old_filename in Rust backend!!
 
-    println!("Old file: {}, new file: {}", oldFilename, newFilename);
+#[command]
+pub fn modify_file(old_filename: String, new_filename: String) -> Result<FileEntry, String> {
+    validate_extension(&new_filename)?;
+    let storage_dir = get_storage_dir()?;
+    let old_path = storage_dir.join(&old_filename);
+    let new_path = storage_dir.join(&new_filename);
+
+    println!("Old file: {}, new file: {}", old_filename, new_filename);
 
     if !old_path.exists() {
         return Err("Original file does not exist".into());
@@ -55,17 +55,19 @@ pub fn modify_file(oldFilename: String, newFilename: String) -> Result<FileEntry
         return Err("New filename already exists".into());
     }
 
-    fs::rename(&old_path, &new_path).map_err(|e| format!("Failed to rename file: {}", e));
+    match fs::rename(&old_path, &new_path) {
+        Ok(_) => println!("Renamed file: {}", new_filename),
+        Err(e) => return Err(format!("Failed to rename file: {}", e)),
+    }
 
     let file_id = new_path.strip_prefix(storage_dir)
         .map_err(|e| format!("Failed to strip prefix: {}", e))?
         .to_string_lossy()
         .into_owned();
 
-    println!("Renamed file: {}", newFilename);
     Ok(FileEntry {
         id: file_id,
-        name: newFilename.split('/').last().unwrap_or(&newFilename).to_string(),
+        name: new_filename.split('/').last().unwrap_or(&new_filename).to_string(),
     })
 }
 
@@ -78,7 +80,11 @@ pub fn delete_file(filename: String) -> Result<(), String> {
         return Err("File does not exist".into());
     }
 
-    fs::remove_file(&file_path).map_err(|e| format!("Failed to delete file: {}", e));
+    match fs::remove_file(&file_path) {
+        Ok(_) => println!("Deleted file: {}", file_path.display()),
+        Err(e) => return Err(format!("Failed to delete file: {}", e)),
+    }
+
     println!("Deleted file: {}", file_path.display());
     Ok(())
 }
@@ -87,6 +93,8 @@ pub fn delete_file(filename: String) -> Result<(), String> {
 pub fn get_file_content(filename: String) -> Result<String, String> {
     let storage_dir = get_storage_dir()?;
     let file_path = storage_dir.join(&filename);
+
+    println!("Reading file: {}", file_path.display());
 
     if !file_path.exists() {
         return Err("File does not exist".into());

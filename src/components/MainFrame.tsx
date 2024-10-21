@@ -23,20 +23,22 @@ export default function MainFrame() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [selectedFile, setSelectedFile] = useState<string | null>(null)
   const [fileContent, setFileContent] = useState<string>('')
-
-  // Initialize with the root folder structure
   const [folders, setFolders] = useState<Folder[]>([])
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen)
 
-  // Fetch folders and files once on component mount
   useEffect(() => {
     refreshFolders();
-  }, []) // Empty dependency array to prevent infinite loops
+  }, []) 
 
   const handleFileClick = async (folderPath: string, file: string) => {
     try {
+      console.log(`Selected file: ${folderPath}/${file}`)
+
       const content = await invoke<string>('get_file_content', { filename: `${folderPath}/${file}` })
+
+      console.log("Content: ", content)
+
       setFileContent(content)
       setSelectedFile(`${folderPath}/${file}`)
     } catch (error) {
@@ -47,15 +49,13 @@ export default function MainFrame() {
   const refreshFolders = async () => {
     try {
       const fetchedFolders = await invoke<Folder[]>('list_all_files')
-      console.log("Fetched: ", fetchedFolders)
-      setFolders(fetchedFolders) // Set the entire folder hierarchy
+      setFolders(fetchedFolders) 
       console.log('Refreshed folders and files:', fetchedFolders);
     } catch (error) {
       console.error('Error refreshing folders:', error)
     }
   }
 
-  console.log("Folders", folders)
 
   return (
     <div className="flex h-screen bg-background text-foreground">

@@ -1,6 +1,5 @@
-use std::{collections::HashMap, fs};
+use std::fs;
 use tauri::command;
-use walkdir::WalkDir;
 use crate::utils::path_utils::get_storage_dir;
 use std::path::Path;
 
@@ -78,10 +77,10 @@ pub fn create_folder(foldername: String) -> Result<Folder, String> {
 }
 
 #[command]
-pub fn modify_folder(oldName: String, newName: String) -> Result<Folder, String> {
+pub fn modify_folder(old_name: String, new_name: String) -> Result<Folder, String> {
     let storage_dir = get_storage_dir()?;
-    let old_path = storage_dir.join(&oldName);
-    let new_path = storage_dir.join(&newName);
+    let old_path = storage_dir.join(&old_name);
+    let new_path = storage_dir.join(&new_name);
 
     if !old_path.exists() {
         return Err("Original folder does not exist".into());
@@ -91,8 +90,10 @@ pub fn modify_folder(oldName: String, newName: String) -> Result<Folder, String>
         return Err("New folder name already exists".into());
     }
 
-    fs::rename(&old_path, &new_path).map_err(|e| format!("Failed to rename folder: {}", e));
-    println!("Renamed folder: {}", new_path.display());
+    match fs::rename(&old_path, &new_path) {
+        Ok(_) => println!("Renamed folder: {}", new_path.display()),
+        Err(e) => return Err(format!("Failed to rename folder: {}", e)),
+    }
 
     let renamed_folder = build_folder(&new_path, &storage_dir)?;
     Ok(renamed_folder)
@@ -107,8 +108,11 @@ pub fn delete_folder(folder_name: String) -> Result<(), String> {
         return Err("Folder does not exist".into());
     }
 
-    fs::remove_dir_all(&folder_path).map_err(|e| format!("Failed to delete folder: {}", e));
-    println!("Deleted folder: {}", folder_path.display());
+    match fs::remove_dir_all(&folder_path) {
+        Ok(_) => println!("Deleted folder: {}", folder_path.display()),
+        Err(e) => return Err(format!("Failed to delete folder: {}", e)),
+    }
+
     Ok(())
 }
 

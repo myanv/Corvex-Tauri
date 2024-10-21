@@ -9,6 +9,7 @@ import { Plus } from 'lucide-react'
 import { invoke } from '@tauri-apps/api/core'
 import { Folder, FileEntry } from './MainFrame'
 import { FileTree } from './FileTree'
+import { Separator } from './ui/separator'
 
 interface SidebarProps {
   folders: Folder[],
@@ -75,6 +76,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <Button variant="ghost" className="w-full justify-start mb-4" onClick={handleCreateNewFolder}>
             <Plus className="mr-2 h-4 w-4" /> New Folder
           </Button>
+
+          <Separator className='mb-4' />
           
           <FileTree folders={folders} onFileClick={onFileClick} onFolderSelect={handleFolderSelect} refreshFolders={refreshFolders}/>
 
