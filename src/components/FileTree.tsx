@@ -53,7 +53,6 @@ export const FileTree: React.FC<FileTreeProps> = ({
     y: number;
     node: NodeApi<any> | null;
   } | null>(null);
-  console.log(folders)
   const [treeData, setTreeData] = useState(folders.map(mapFolderToTree));
 
   useEffect(() => {

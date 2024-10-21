@@ -1,9 +1,10 @@
 'use client'
 
-import React from "react";
+import React, { useEffect } from "react";
 import { TopNav } from "./TopNav";
 import { Note } from "./Note";
 import { invoke } from "@tauri-apps/api/core";
+import { LaTeXEditorPage } from "./LaTeXEditorPage";
 
 interface ContentProps {
     toggleSidebar: () => void;
@@ -20,6 +21,17 @@ export const Content: React.FC<ContentProps> = ({
     setSelectedFile,
     fileContent,
 }) => {
+    const fileType = selectedFile?.split('.').pop(); 
+
+    useEffect(() => {
+        if (selectedFile) {
+            invoke('get_file_content', { filename: selectedFile })
+                .then((value) => {
+                    setFileContent(value as string)
+                })
+                .catch((error: any) => console.error('Failed to load file:', error))
+        }
+    }, [selectedFile])
 
     const saveFile = () => {
         if (selectedFile) {
@@ -39,8 +51,8 @@ export const Content: React.FC<ContentProps> = ({
                 toggleSidebar={toggleSidebar} 
                 onSave={saveFile}
             />
-
-            <Note selectedFile={selectedFile} fileContent={fileContent} setFileContent={setFileContent} />
+            {fileType === 'md' && <Note selectedFile={selectedFile} fileContent={fileContent} setFileContent={setFileContent} />}
+            {fileType === 'tex' && <LaTeXEditorPage />}
         </main>
     )
 }
