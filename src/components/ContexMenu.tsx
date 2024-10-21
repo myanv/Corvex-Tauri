@@ -1,0 +1,33 @@
+import React from 'react';
+import { Cross2Icon } from '@radix-ui/react-icons';
+
+interface ContextMenuProps {
+  x: number;
+  y: number;
+  onRename: () => void;
+  onDelete: () => void;
+}
+
+const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onRename, onDelete }) => {
+  return (
+    <div
+      className="z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95"
+      style={{
+        position: 'fixed',
+        top: `${y}px`,
+        left: `${x}px`,
+      }}
+    >
+      <div className="flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground" onClick={onRename}>
+        
+        <span>Rename</span>
+      </div>
+      <div className="flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground" onClick={onDelete}>
+        <Cross2Icon className="mr-2 h-4 w-4" />
+        <span>Delete</span>
+      </div>
+    </div>
+  );
+};
+
+export default ContextMenu;
