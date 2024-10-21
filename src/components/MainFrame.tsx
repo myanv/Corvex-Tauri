@@ -32,16 +32,18 @@ export default function MainFrame() {
     refreshFolders();
   }, []) 
 
-  const handleFileClick = async (folderPath: string) => {
+  const handleFileClick = async (folderPath: string, file: string) => {
     try {
-      console.log(`Folder path: ${folderPath}`)
+      const filename = folderPath === "" ? file : `${folderPath}/${file}`;
 
-      const content = await invoke<string>('get_file_content', { filename: folderPath })
+      console.log(`Selected file: ${filename}`)
+
+      const content = await invoke<string>('get_file_content', { filename: filename })
 
       console.log("Content: ", content)
 
       setFileContent(content)
-      setSelectedFile(folderPath)
+      setSelectedFile(filename)
     } catch (error) {
       console.error('Failed to load file:', error)
     }

@@ -16,7 +16,7 @@ interface SidebarProps {
   selectedFile: string | null
   setSelectedFile: (file: string) => void
   sidebarOpen: boolean
-  onFileClick: (folderPath: string) => void,
+  onFileClick: (folderPath: string, file: string) => void,
   refreshFolders: () => void
 }
 
